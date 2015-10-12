@@ -113,8 +113,8 @@ enum ERRORS
 	E (118, BUILD_FRONT)
 };
 
-const wchar_t  APPLICATION_TITLE_W[] = L"WaterOptics";
-const char     APPLICATION_TITLE_A[] = "WaterOptics";
+const wchar_t  APPLICATION_TITLE_W[] = L"MeteoProject";
+const char     APPLICATION_TITLE_A[] = "MeteoProject";
 const uint16_t MAX_STRING_LENGTH = 512;
 const UINT     CONST_WINDOW_STYLE = WS_MINIMIZEBOX | WS_BORDER | WS_CAPTION | WS_SYSMENU;
 

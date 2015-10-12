@@ -10,3 +10,4 @@
 #include "Object.h"
 #include "Direct3DProcessor.h"
 #include "DataLoader.h"
+#include "MeteoObject.h"

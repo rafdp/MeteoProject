@@ -25,7 +25,6 @@ WindowClass::~WindowClass ()
 		Destroy ();
 		SendNotifyMessage (hwnd_, WM_DESTROY, 0, 100500);
 	}
-
 }
 
 void WindowClass::RegisterApplication ()

@@ -160,6 +160,7 @@
     <ClCompile Include="Direct3DProcessor.cpp" />
     <ClCompile Include="Exception.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="MeteoObject.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
     <ClCompile Include="Support.cpp" />
@@ -173,6 +174,7 @@
     <ClInclude Include="Direct3DProcessor.h" />
     <ClInclude Include="Exception.h" />
     <ClInclude Include="includes.h" />
+    <ClInclude Include="MeteoObject.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="ShaderManager.h" />
     <ClInclude Include="SharedDeclarations.h" />

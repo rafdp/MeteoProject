@@ -388,7 +388,7 @@ void Direct3DCamera::Update ()
 {
 	BEGIN_EXCEPTION_HANDLING
 
-		view_ = XMMatrixLookAtLH (position_, target_, up_);
+	view_ = XMMatrixLookAtLH (position_, target_, up_);
 	projection_ = XMMatrixPerspectiveFovLH (projectionSettings_.x * 3.141592f,
 											((float)wnd_->width ()) / wnd_->height (),
 											projectionSettings_.y,

@@ -37,7 +37,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 																	   1);
 		d3dProc.UpdateConstantBuffer (camBuf);
 
-		MeteoDataLoader meteo ("Data/COSMOMESH", "Data/Fronts", "Data/H", &d3dProc);
+		MeteoObject meteo ("Data/COSMOMESH", "Data/Fronts", "Data/H", &d3dProc);
 		cam.Update ();
 		
 		SetForegroundWindow (window.hwnd ());
