@@ -16,7 +16,7 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	layout_ ()
 {
 	CreateMap (proc);
-	CreateFronts (proc);
+	CreateFrontsParticles (proc);
 }
 _END_EXCEPTION_HANDLING (CTOR)
 
@@ -83,8 +83,11 @@ void MeteoObject::CreateMap (Direct3DProcessor* proc)
 		}
 	}
 
-	float xMIN = data_.latitude (0, 0), yMIN = data_.longitude (0, 0);
-	float xMAX = data_.latitude (0, 0), yMAX = data_.longitude (0, 0);
+	//float xMIN = data_.latitude (0, 0), yMIN = data_.longitude (0, 0);
+	float xMIN = 0, yMIN = 0;
+	//float xMAX = data_.latitude (0, 0), yMAX = data_.longitude (0, 0);
+	float xMAX = DATA_WIDTH, yMAX = DATA_HEIGHT;
+	/*
 	for (int x = 0; x < DATA_WIDTH; x++)
 	{
 		for (int y = 0; y < DATA_HEIGHT; y++)
@@ -94,7 +97,7 @@ void MeteoObject::CreateMap (Direct3DProcessor* proc)
 			if (data_.longitude (x, y) < yMIN) yMIN = data_.longitude (x, y);
 			if (data_.longitude (x, y) > yMAX) yMAX = data_.longitude (x, y);
 		}
-	}
+	}*/
 
 	float xD = xMAX - xMIN;
 	float yD = yMAX - yMIN;
@@ -110,8 +113,10 @@ void MeteoObject::CreateMap (Direct3DProcessor* proc)
 	{
 		for (int y = 0; y < DATA_HEIGHT; y++)
 		{
-			currX = (data_.latitude (x, y) - xMIN);
-			currY = (data_.longitude (x, y) - yMIN);
+			//currX = (data_.latitude (x, y) - xMIN);
+			currX = x;
+			//currY = (data_.longitude (x, y) - yMIN);
+			currY = y;
 			currentVertex = {};
 			int16_t h = data_.ground (x, y);
 			currentVertex.SetPos (-REGION_X / 2.0f + REGION_X / (xD)* currX,
@@ -265,6 +270,139 @@ void MeteoObject::CreateFronts (Direct3DProcessor* proc)
 					currentVertex.SetColor (0.0f, color, color, sin (color * XM_PI / 2.0f));
 
 					float Y = (kLow * data_.height (x, y, i, currentHour_) + kHigh * data_.height (x, y, i + 1, currentHour_));
+
+					currentVertex.y = -REGION_Z / 2.0f + REGION_Z / hD * Y;
+					vertices.push_back (currentVertex);
+				}
+			}
+
+		}
+	}
+	proc->AttachShaderToObject (front_, vertS_);
+	proc->AttachShaderToObject (front_, pixS_);
+	proc->AttachShaderToObject (front_, geoS_);
+	proc->SetLayout (front_, layout_);
+	proc->RegisterObject (front_);
+
+	END_EXCEPTION_HANDLING (BUILD_FRONT)
+}
+
+
+void MeteoObject::CreateFrontsParticles (Direct3DProcessor* proc)
+{
+	BEGIN_EXCEPTION_HANDLING
+
+	if (front_)
+	{
+		//front_->ClearBuffers ();
+		proc->RemoveObject (front_);
+		_aligned_free (front_);
+	}
+	XMMATRIX world = object_->GetWorld ();
+	//if (!front_)
+	front_ = new (GetValidObjectPtr ())
+		Direct3DObject (world, false, false, D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+
+	const UINT interpolationN = 100;
+	Vertex_t currentVertex = {};
+
+	std::vector<Vertex_t>& vertices = front_->GetVertices ();
+	vertices.clear ();
+	LoadShadersAndLayout (proc);
+
+	MeteoData_t& data_ = dl_.data_;
+
+
+	float hMIN = data_.ground (0, 0);
+	float hMAX = data_.height (0, 0, 0, currentHour_);
+
+	//float xMIN = data_.latitude (0, 0), yMIN = data_.longitude (0, 0);
+	float xMIN = 0, yMIN = 0;
+	//float xMAX = data_.latitude (0, 0), yMAX = data_.longitude (0, 0);
+	float xMAX = DATA_WIDTH, yMAX = DATA_HEIGHT;
+	float midSliceHeight[SLICES] = {};
+
+	for (int x = 0; x < DATA_WIDTH; x++)
+	{
+		for (int y = 0; y < DATA_HEIGHT; y++)
+		{
+			//if (data_.latitude (x, y) < xMIN) xMIN = data_.latitude (x, y);
+			//if (data_.latitude (x, y) > xMAX) xMAX = data_.latitude (x, y);
+			//if (data_.longitude (x, y) < yMIN) yMIN = data_.longitude (x, y);
+			//if (data_.longitude (x, y) > yMAX) yMAX = data_.longitude (x, y);
+			float midH = 0.0f;
+			for (int i = 0; i < SLICES; i++)
+				midSliceHeight[i] += data_.height (x, y, i, currentHour_) / (1.0f * DATA_WIDTH * DATA_HEIGHT);
+		}
+	}
+	float xD = xMAX - xMIN;
+	float yD = yMAX - yMIN;
+	//float midSliceHeight[SLICES] = {};
+
+	for (int x = 0; x < DATA_WIDTH; x++)
+	{
+		for (int y = 0; y < DATA_HEIGHT; y++)
+		{
+			if (data_.ground (x, y) < hMIN) hMIN = data_.ground (x, y);
+			for (int i = 0; i < SLICES; i++)
+				if (data_.height (x, y, i, 0) > hMAX)
+					hMAX = data_.height (x, y, i, currentHour_);
+			if (data_.ground (x, y) > hMAX)
+				hMAX = data_.ground (x, y);
+		}
+	}
+	float clipColor = 0.3f;
+	float hD = (hMAX - hMIN);
+	float currX = 0.0f, currY = 0.0f;
+	for (int x = DATA_WIDTH / 3; x < 9*DATA_WIDTH / 20; x++)
+	{
+		//printf ("%f %%\n", x / (0.01f * DATA_WIDTH));
+		for (int y = 4*DATA_HEIGHT / 6; y < 95 * DATA_HEIGHT / 120; y++)
+		{
+			//currX = (data_.latitude (x, y) - xMIN);
+			currX = x;
+			//currY = (data_.longitude (x, y) - yMIN);
+			currY = y;
+			for (uint8_t i = 0; i < SLICES; i++)
+			{
+				{
+					float color = data_.front (x, y, i, currentHour_) / 12.0f;
+					if (!(color > 1.0f || color < 0.01f))
+					{
+						currentVertex.SetColor (1.0f, color, color, sin (color * XM_PI / 2.0f));
+
+						currentVertex.SetPos (-REGION_X / 2.0f + REGION_X / (xD)* currX,
+											  -REGION_Z / 2.0f + REGION_Z / hD * data_.height (x, y, i, currentHour_),
+											  -REGION_Y / 2.0f + REGION_Y / (yD)* currY);
+						vertices.push_back (currentVertex);
+					}
+
+				}
+				if (i == (SLICES - 1)) break;
+				//continue;
+				const int interN = fabs (midSliceHeight[i + 1] - midSliceHeight[i]) / (1.0f * interpolationN);
+				for (uint16_t interp = 0; interp < interN; interp++)
+				{
+					float kLow = (interN - interp) / (interN + 1.0f);
+					//float kHigh = (interp + 1) / (interN + 1.0f);
+					float frontLow = data_.front (x, y, i, currentHour_) > 13.0f ? 0.0f : data_.front (x, y, i, currentHour_);
+					float frontHigh = data_.front (x, y, i + 1, currentHour_) > 13.0f ? 0.0f : data_.front (x, y, i + 1, currentHour_);
+					float color = (kLow * frontLow + (1.0f-kLow) * frontHigh) / 12.0f;
+
+					if (color > 1.0f || color < 0.01f) continue;
+					if (color < 0.1f) continue;
+					if (x == 286 && y == 468)
+						currentVertex.SetColor (1.0f, 0.0f, 1.0f, 1.0f);
+					else
+					if (interp / (1.0f * interN) > 0.5f && color > 0.5f && data_.front (x, y, i, currentHour_) <= 0.1f)
+						currentVertex.SetColor (1.0f, 1.0f, 0.0f, 1.0f);
+					else
+						currentVertex.SetColor (0.0f, color, color, color);
+					if (interp / (1.0f * interN) > 0.5f && color > 0.5f && data_.front (x, y, i, currentHour_) <= 0.1f)
+						printf ("low %f high %f frontLow %f frontHigh %f interp %f %d %d\n", kLow, 1.0f-kLow, frontLow, frontHigh, interp / (1.0f * interN), x, y);
+
+
+					float Y = (kLow * data_.height (x, y, i, currentHour_) + (1.0f - kLow) * data_.height (x, y, i + 1, currentHour_));
 
 					currentVertex.y = -REGION_Z / 2.0f + REGION_Z / hD * Y;
 					vertices.push_back (currentVertex);

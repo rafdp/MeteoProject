@@ -6,7 +6,7 @@ class Direct3DCamera : NZA_t
 {
 	WindowClass* wnd_;
 	XMVECTOR position_;
-	XMVECTOR target_;
+	XMVECTOR direction_;
 	XMVECTOR up_;
 	XMFLOAT3 projectionSettings_;
 
@@ -26,6 +26,19 @@ public:
 
 	const XMMATRIX& GetView ();
 	const XMMATRIX& GetProjection ();
+
+	void StorePos (XMFLOAT4& pos);
+
+	void TranslatePos (XMFLOAT3 move);
+	void TranslatePos (XMVECTOR move);
+	void RotateDir (float hor, float ver);
+	void MoveForward (float d);
+	void MoveBackward (float d);
+	void MoveRight (float d);
+	void MoveLeft (float d);
+
+	void RotateHorizontal (float a);
+	void RotateVertical (float a);
 };
 struct Vertex_t
 {

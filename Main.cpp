@@ -3,6 +3,8 @@
 
 ExceptionData_t* __EXPN__ = nullptr;
 
+void ProcessCam (Direct3DCamera* cam);
+
 int WINAPI WinMain (HINSTANCE hInstance,
 					HINSTANCE legacy,
 					LPSTR lpCmdLine,
@@ -25,12 +27,12 @@ int WINAPI WinMain (HINSTANCE hInstance,
 
 		
 		//XMMATRIX world = XMMatrixTranslation (0.0f, 0.0f, 0.0f);
-		XMFLOAT4 camPos = { 0.0f, 4.0f, 8.0f, 1.0f };
+		XMFLOAT4 camPos = { 0.0f, 4.0f, -4.0f, 1.0f };
 		Direct3DCamera cam (&window,
 							camPos.x, camPos.y, camPos.z,
-							0.0f, 0.0f, 0.0f,
+							0.0f, -1.0f, 1.0f,
 							0.0, 1.0f, 0.0f,
-							0.03f);
+							0.1f, 0.1f);
 
 		ConstantBufferIndex_t camBuf = d3dProc.RegisterConstantBuffer (&camPos,
 																	   sizeof (camPos),
@@ -89,6 +91,13 @@ int WINAPI WinMain (HINSTANCE hInstance,
 			}
 			else wasPressedN = false;
 
+			ProcessCam (&cam);
+
+			//cam.RotateHorizontal (0.1f);
+			cam.Update ();
+			cam.StorePos (camPos);
+			d3dProc.UpdateConstantBuffer (camBuf);
+
 			d3dProc.SendCBToGS (camBuf);
 			d3dProc.ProcessDrawing (&cam, true);
 			d3dProc.Present ();
@@ -116,3 +125,42 @@ int WINAPI WinMain (HINSTANCE hInstance,
 	return 0;
 }
 
+
+void ProcessCam (Direct3DCamera* cam)
+{
+	float k = 0.5f;
+	if (GetAsyncKeyState (VK_LSHIFT)) k *= 2;
+
+	if (GetAsyncKeyState ('W'))
+	{
+		cam->MoveForward (k*0.02f);
+	}
+	if (GetAsyncKeyState ('S'))
+	{
+		cam->MoveBackward (k*0.02f);
+	}
+	if (GetAsyncKeyState ('A'))
+	{
+		cam->MoveLeft (k*0.005f);
+	}
+	if (GetAsyncKeyState ('D'))
+	{
+		cam->MoveRight (k*0.005f);
+	}
+	if (GetAsyncKeyState (VK_UP))
+	{
+		cam->RotateVertical (k*0.005f);
+	}
+	if (GetAsyncKeyState (VK_DOWN))
+	{
+		cam->RotateVertical (-k*0.005f);
+	}
+	if (GetAsyncKeyState (VK_RIGHT))
+	{
+		cam->RotateHorizontal (k*0.01f);
+	}
+	if (GetAsyncKeyState (VK_LEFT))
+	{
+		cam->RotateHorizontal (-k*0.01f);
+	}
+}

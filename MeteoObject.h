@@ -24,8 +24,11 @@ class MeteoObject : NZA_t
 
 	void CreateMap (Direct3DProcessor* proc);
 	void CreateFronts (Direct3DProcessor* proc);
+	void CreateFrontsParticles (Direct3DProcessor* proc);
 
 	void Rotate ();
 
 	void NextHour (Direct3DProcessor * proc);
+
+	float FrontPower (float x, float y, float z);
 };

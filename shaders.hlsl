@@ -54,7 +54,7 @@ void GShader (point GS_INPUT input[1],
 	float3 upAxis = normalize (float3 (0.0f, 1.0f, zPerpendicular));
 	float3 rightAxis = normalize (cross (normal, upAxis));
 
-	float d = 0.0015f;
+	float d = 0.001f;
 
 	for (int i = 0; i < 6; i++)
 		output[i].color = input[0].color;

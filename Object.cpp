@@ -367,26 +367,25 @@ Direct3DCamera::Direct3DCamera (WindowClass* wnd,
 	try :
 	wnd_ (wnd),
 	position_ (XMVectorSet (posX, posY, posZ, 0.0f)),
-	target_ (XMVectorSet (tgtX, tgtY, tgtZ, 0.0f)),
+	direction_ (XMVectorSet (tgtX, tgtY, tgtZ, 0.0f)),
 	up_ (XMVectorSet (upX, upY, upZ, 0.0f)),
 	projectionSettings_ (fov, zNear, zFar),
-	view_ (XMMatrixLookAtLH (position_, target_, up_)),
+	view_ (),
 	projection_ (XMMatrixIdentity ())
 {
 	if (wnd == nullptr)
 		_EXC_N (NULL_WND,
 				"D3D: Cannot create camera over null window");
 
-	projection_ = XMMatrixPerspectiveFovLH (projectionSettings_.x * 3.141592f,
-											((float)wnd_->width ()) / wnd_->height (),
-											projectionSettings_.y,
-											projectionSettings_.z);
+	Update ();
 }
 _END_EXCEPTION_HANDLING (CTOR)
 
 void Direct3DCamera::Update ()
 {
 	BEGIN_EXCEPTION_HANDLING
+
+	XMVECTOR target_ = position_ + direction_;
 
 	view_ = XMMatrixLookAtLH (position_, target_, up_);
 	projection_ = XMMatrixPerspectiveFovLH (projectionSettings_.x * 3.141592f,
@@ -407,6 +406,56 @@ const XMMATRIX& Direct3DCamera::GetProjection ()
 	return projection_;
 }
 
+void Direct3DCamera::TranslatePos (XMFLOAT3 move)
+{
+	XMVECTOR movement = XMLoadFloat3 (&move);
+	position_ += movement;
+	direction_ += movement;
+}
+
+void Direct3DCamera::TranslatePos (XMVECTOR move)
+{
+	position_ += move;
+	//direction_ += move;
+}
+
+void Direct3DCamera::RotateDir (float hor, float ver)
+{
+	direction_ = XMVector4Transform (direction_, XMMatrixRotationAxis (up_, hor));
+	direction_ = XMVector4Transform (direction_, XMMatrixRotationAxis (XMVector3Cross (up_, direction_), ver));
+}
+
+void Direct3DCamera::MoveForward (float d)
+{
+	TranslatePos (XMVector3Normalize (direction_) * d);
+
+}
+void Direct3DCamera::MoveBackward (float d)
+{
+	TranslatePos (-XMVector3Normalize (direction_) * d);
+}
+void Direct3DCamera::MoveRight (float d)
+{
+	TranslatePos (-XMVector3Normalize (XMVector3Cross (direction_, up_)) * d);
+}
+void Direct3DCamera::MoveLeft (float d)
+{
+	TranslatePos (XMVector3Normalize (XMVector3Cross (direction_, up_)) * d);
+}
+
+void Direct3DCamera::RotateHorizontal (float a)
+{
+	RotateDir (a, 0.0f);
+}
+void Direct3DCamera::RotateVertical (float a)
+{
+	RotateDir (0.0f, -a);
+}
+
+void Direct3DCamera::StorePos (XMFLOAT4& pos)
+{
+	XMStoreFloat4 (&pos, position_);
+}
 
 void* GetValidObjectPtr ()
 {
