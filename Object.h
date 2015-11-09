@@ -28,6 +28,8 @@ public:
 	const XMMATRIX& GetProjection ();
 
 	void StorePos (XMFLOAT4& pos);
+	void SetPos (XMFLOAT4 pos);
+	void SetDir (XMFLOAT4 dir);
 
 	void TranslatePos (XMFLOAT3 move);
 	void TranslatePos (XMVECTOR move);

@@ -140,14 +140,14 @@ typedef uint64_t TextureIndex_t;
 typedef uint64_t ShaderIndex_t;
 typedef uint64_t ConstantBufferIndex_t;
 
-const size_t DATA_WIDTH = 700;
-const size_t DATA_HEIGHT = 620;
+const size_t DATA_WIDTH = 1000;
+const size_t DATA_HEIGHT = 500;
 
-const UINT SLICES = 3;
-const UINT HOURS = 25;
+const UINT SLICES = 14;
+const UINT HOURS = 1;
 
-const float REGION_X = 1.4f;
-const float REGION_Y = 1.24f;
-const float REGION_Z = 0.1f;
+const float REGION_X = 2.0f;
+const float REGION_Y = 1.0f;
+const float REGION_Z = 0.5f;
 
 #undef E

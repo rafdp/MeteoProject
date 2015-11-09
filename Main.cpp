@@ -77,7 +77,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 				}
 			}
 			else wasPressedSpace = false;
-
+			/*
 			if (GetAsyncKeyState ('N'))
 			{
 				if (!wasPressedN)
@@ -89,7 +89,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 					wasPressedN = true;
 				}
 			}
-			else wasPressedN = false;
+			else wasPressedN = false;*/
 
 			ProcessCam (&cam);
 
@@ -131,6 +131,16 @@ void ProcessCam (Direct3DCamera* cam)
 	float k = 0.5f;
 	if (GetAsyncKeyState (VK_LSHIFT)) k *= 2;
 
+	if (GetAsyncKeyState ('E'))
+	{
+		XMFLOAT3 d = { 0.0f, k*0.005f, 0.0f };
+		cam->TranslatePos (d);
+	}
+	if (GetAsyncKeyState ('Q'))
+	{
+		XMFLOAT3 d = { 0.0f, -k*0.005f, 0.0f };
+		cam->TranslatePos (d);
+	}
 	if (GetAsyncKeyState ('W'))
 	{
 		cam->MoveForward (k*0.02f);
@@ -146,6 +156,11 @@ void ProcessCam (Direct3DCamera* cam)
 	if (GetAsyncKeyState ('D'))
 	{
 		cam->MoveRight (k*0.005f);
+	}
+	if (GetAsyncKeyState ('N'))
+	{
+		cam->SetPos ({0.0f, 4.0f, -4.0f, 1.0f});
+		cam->SetDir ({ 0.0f, -4.0f, 4.0f, 1.0f});
 	}
 	if (GetAsyncKeyState (VK_UP))
 	{

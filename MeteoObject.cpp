@@ -303,7 +303,7 @@ void MeteoObject::CreateFrontsParticles (Direct3DProcessor* proc)
 	front_ = new (GetValidObjectPtr ())
 		Direct3DObject (world, false, false, D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
-	const UINT interpolationN = 100;
+	const UINT interpolationN = 500;
 	Vertex_t currentVertex = {};
 
 	std::vector<Vertex_t>& vertices = front_->GetVertices ();
@@ -354,10 +354,10 @@ void MeteoObject::CreateFrontsParticles (Direct3DProcessor* proc)
 	float clipColor = 0.3f;
 	float hD = (hMAX - hMIN);
 	float currX = 0.0f, currY = 0.0f;
-	for (int x = DATA_WIDTH / 3; x < 9*DATA_WIDTH / 20; x++)
+	for (int x = 0; x < DATA_WIDTH; x++)
 	{
 		//printf ("%f %%\n", x / (0.01f * DATA_WIDTH));
-		for (int y = 4*DATA_HEIGHT / 6; y < 95 * DATA_HEIGHT / 120; y++)
+		for (int y = 0; y < DATA_HEIGHT; y++)
 		{
 			//currX = (data_.latitude (x, y) - xMIN);
 			currX = x;
@@ -391,15 +391,9 @@ void MeteoObject::CreateFrontsParticles (Direct3DProcessor* proc)
 
 					if (color > 1.0f || color < 0.01f) continue;
 					if (color < 0.1f) continue;
-					if (x == 286 && y == 468)
-						currentVertex.SetColor (1.0f, 0.0f, 1.0f, 1.0f);
-					else
-					if (interp / (1.0f * interN) > 0.5f && color > 0.5f && data_.front (x, y, i, currentHour_) <= 0.1f)
-						currentVertex.SetColor (1.0f, 1.0f, 0.0f, 1.0f);
-					else
-						currentVertex.SetColor (0.0f, color, color, color);
-					if (interp / (1.0f * interN) > 0.5f && color > 0.5f && data_.front (x, y, i, currentHour_) <= 0.1f)
-						printf ("low %f high %f frontLow %f frontHigh %f interp %f %d %d\n", kLow, 1.0f-kLow, frontLow, frontHigh, interp / (1.0f * interN), x, y);
+					currentVertex.SetColor (0.0f, color, color, color *2.0f >= 1.0f ? 1.0f : color * 2.0f);
+					//if (interp / (1.0f * interN) > 0.5f && color > 0.5f && data_.front (x, y, i, currentHour_) <= 0.1f)
+						//printf ("low %f high %f frontLow %f frontHigh %f interp %f %d %d\n", kLow, 1.0f-kLow, frontLow, frontHigh, interp / (1.0f * interN), x, y);
 
 
 					float Y = (kLow * data_.height (x, y, i, currentHour_) + (1.0f - kLow) * data_.height (x, y, i + 1, currentHour_));

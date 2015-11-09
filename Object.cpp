@@ -457,6 +457,15 @@ void Direct3DCamera::StorePos (XMFLOAT4& pos)
 	XMStoreFloat4 (&pos, position_);
 }
 
+
+void Direct3DCamera::SetPos (XMFLOAT4 pos)
+{
+	position_ = XMLoadFloat4 (&pos);
+}
+void Direct3DCamera::SetDir (XMFLOAT4 dir)
+{
+	direction_ = XMLoadFloat4 (&dir);
+}
 void* GetValidObjectPtr ()
 {
 	return _aligned_malloc (sizeof (Direct3DObject), 16);
