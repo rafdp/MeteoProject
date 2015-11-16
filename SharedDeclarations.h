@@ -111,6 +111,7 @@ enum ERRORS
 	E (116, CREATE_OBJECTS)
 	E (117, NULL_FRONT_OBJECT)
 	E (118, BUILD_FRONT)
+	E (119, NULL_WND_PTR)
 };
 
 const wchar_t  APPLICATION_TITLE_W[] = L"MeteoProject";

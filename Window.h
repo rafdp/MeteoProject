@@ -10,8 +10,15 @@ private:
 	UINT style_;
 	volatile bool running_;
 
+	void* callbackPtr_;
+
+	std::map <UINT, void (*) (void*, WPARAM, LPARAM)> callbacks_;
+
 	void Destroy ();
 	void CreateWin32Window ();
+	void ProcessMessageCallback (UINT msg,
+								 WPARAM wparam,
+								 LPARAM lparam);
 
 public:
 	void ok ();
@@ -29,6 +36,12 @@ public:
 											UINT msg,
 											WPARAM wparam,
 											LPARAM lparam);
+
+	void AddCallback (UINT msg, void (*f) (void*, WPARAM, LPARAM));
+	void WindowClass::SetCallbackPtr (void* ptr);
+
+	void This ();
+
 };
 
 void LinkHWNDToClass (HWND wnd, LPARAM& createStr);

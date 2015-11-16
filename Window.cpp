@@ -10,9 +10,12 @@ WindowClass::WindowClass (int width,
 	try :  
 	hwnd_    (nullptr),
 	size_    ({ width, height }),
-	style_   (CONST_WINDOW_STYLE),
-	running_ (false)
+	style_ (CONST_WINDOW_STYLE),
+	running_ (false),
+	callbacks_ (),
+	callbackPtr_ (nullptr)
 {
+	printf ("%X\n", this);
 	RegisterApplication ();
 	CreateWin32Window ();
 }
@@ -60,10 +63,10 @@ HWND WindowClass::hwnd ()
 void WindowClass::Destroy ()
 {
 	BEGIN_EXCEPTION_HANDLING
-	if (!running_)
-		_EXC_N (NOT_RUNNING,
-				"Trying to destory already destroyed window")
-	running_ = false;
+		if (!running_)
+			_EXC_N (NOT_RUNNING,
+					"Trying to destory already destroyed window")
+			running_ = false;
 	hwnd_ = NULL;
 	size_ = {};
 
@@ -74,33 +77,40 @@ void WindowClass::CreateWin32Window ()
 {
 	BEGIN_EXCEPTION_HANDLING
 
-	RECT windowRect = { (LONG)(SCREEN_WIDTH  - size_.cx) / 2,
-					    (LONG)(SCREEN_HEIGHT - size_.cy) / 2,
-						(LONG)(SCREEN_WIDTH  + size_.cx) / 2,
-						(LONG)(SCREEN_HEIGHT + size_.cy) / 2 };
+		RECT windowRect = { (LONG)(SCREEN_WIDTH - size_.cx) / 2,
+							(LONG)(SCREEN_HEIGHT - size_.cy) / 2,
+							(LONG)(SCREEN_WIDTH + size_.cx) / 2,
+							(LONG)(SCREEN_HEIGHT + size_.cy) / 2 };
 	AdjustWindowRect (&windowRect, style_, false);
 
-
-	HWND handle = CreateWindowExA (0, 
-								   APPLICATION_TITLE_A, 
-								   APPLICATION_TITLE_A, 
+	HWND handle = CreateWindowExA (0,
+								   APPLICATION_TITLE_A,
+								   APPLICATION_TITLE_A,
 								   style_,
 								   windowRect.left,
 								   windowRect.top,
 								   windowRect.right - windowRect.left,
 								   windowRect.bottom - windowRect.top,
-								   NULL, 
-								   NULL, 
+								   NULL,
+								   NULL,
 								   NULL,
 								   this);
 	if (!handle)
 		_EXC_N (NULL_HANDLE, "Win32 CreateWindow failed")
-	hwnd_ = handle;
+		hwnd_ = handle;
 	ShowWindow (handle, SW_SHOWNORMAL);
 	SetForegroundWindow (handle);
 	UpdateWindow (handle);
 	running_ = true;
 	END_EXCEPTION_HANDLING (CREATE_WINDOW)
+}
+
+void WindowClass::ProcessMessageCallback (UINT msg, WPARAM wparam, LPARAM lparam)
+{
+	auto found = callbacks_.find (msg);
+	if (found != callbacks_.end ())
+		(*found->second) (callbackPtr_, wparam, lparam);
+
 }
 
 UINT WindowClass::width ()
@@ -121,15 +131,18 @@ LRESULT CALLBACK WindowCallback (HWND windowHandle,
 {
 	try
 	{
-
+		WindowClass* windowPtr = reinterpret_cast <WindowClass*> (GetWindowLongPtr (windowHandle, GWL_MY_USERDATA));
+		if (windowPtr)
+			windowPtr->ProcessMessageCallback (msg, wparam, lparam);
 		switch (msg)
 		{
 			case WM_CREATE:
 			{
-				WindowClass* windowPtr = reinterpret_cast<WindowClass*> (lparam + offsetof (CREATESTRUCT, lpCreateParams));
+				WindowClass* windowPtr = *reinterpret_cast<WindowClass**> (lparam + offsetof (CREATESTRUCT, lpCreateParams));
 				SetWindowLongPtr (windowHandle,
 								  GWL_MY_USERDATA,
 							      reinterpret_cast<LONG_PTR> (windowPtr));
+
 				break;
 			}
 			case WM_DESTROY:
@@ -149,12 +162,10 @@ LRESULT CALLBACK WindowCallback (HWND windowHandle,
 
 			case WM_SIZE:
 			{
-				WindowClass* wc = reinterpret_cast <WindowClass*> (GetWindowLongPtr (windowHandle, GWL_MY_USERDATA));
-							
 				if (wparam == SIZE_MINIMIZED) break;
 				RECT r = {};
 				GetClientRect (windowHandle, &r);
-				wc->size_ = { r.right - r.left, r.bottom - r.top };
+				windowPtr->size_ = { r.right - r.left, r.bottom - r.top };
 				UpdateWindow (windowHandle);
 				break;
 			}
@@ -179,6 +190,8 @@ LRESULT CALLBACK WindowCallback (HWND windowHandle,
 				break;
 
 		}
+
+		
 		return DefWindowProc (windowHandle, msg, wparam, lparam);
 	}
 	catch (ExceptionHandler_t& ex)
@@ -195,4 +208,20 @@ LRESULT CALLBACK WindowCallback (HWND windowHandle,
 	{
 		_MessageBox ("Exception occurred\n");
 	}
+}
+
+
+void WindowClass::AddCallback (UINT msg, void (*f) (void*, WPARAM, LPARAM))
+{
+	callbacks_[msg] = f;
+}
+
+void WindowClass::SetCallbackPtr (void* ptr)
+{
+	callbackPtr_ = ptr;
+}
+
+void WindowClass::This ()
+{
+	printf ("_____%X\n", this);
 }

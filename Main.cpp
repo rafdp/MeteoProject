@@ -42,6 +42,8 @@ int WINAPI WinMain (HINSTANCE hInstance,
 		MeteoObject meteo ("Data/COSMOMESH", "Data/Fronts", "Data/H", &d3dProc);
 		cam.Update ();
 		
+		window.This ();
+
 		SetForegroundWindow (window.hwnd ());
 
 

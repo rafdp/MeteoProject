@@ -717,6 +717,11 @@ ID3D11Device * Direct3DProcessor::GetDevice ()
 	return device_;
 }
 
+WindowClass * Direct3DProcessor::GetWindowPtr ()
+{
+	return wnd_;
+}
+
 
 void Direct3DProcessor::EnableObjectSettings (Direct3DObject* obj)
 {

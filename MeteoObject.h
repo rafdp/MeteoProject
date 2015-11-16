@@ -12,6 +12,7 @@ class MeteoObject : NZA_t
 	ShaderIndex_t pixS_;
 	ShaderIndex_t geoS_;
 	LayoutIndex_t layout_;
+	WindowClass*  wnd_;
 
 	public:
 
@@ -19,6 +20,8 @@ class MeteoObject : NZA_t
 				 std::string fronts,
 				 std::string height,
 				 Direct3DProcessor* proc);
+
+	void ok ();
 	~MeteoObject ();
 	void LoadShadersAndLayout (Direct3DProcessor* proc);
 
@@ -30,5 +33,9 @@ class MeteoObject : NZA_t
 
 	void NextHour (Direct3DProcessor * proc);
 
-	float FrontPower (float x, float y, float z);
+	//float FrontPower (float x, float y, float z);
+
+	friend void OnPoint (void*, WPARAM, LPARAM);
+
+	void MouseClick (int x, int y);
 };

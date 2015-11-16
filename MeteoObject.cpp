@@ -13,12 +13,23 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	vertS_ (),
 	pixS_ (),
 	geoS_ (),
-	layout_ ()
+	layout_ (),
+	wnd_   (proc->GetWindowPtr ())
 {
+	proc->GetWindowPtr ()->SetCallbackPtr (this);
+	proc->GetWindowPtr ()->AddCallback (WM_LBUTTONDOWN, OnPoint);
 	CreateMap (proc);
-	CreateFrontsParticles (proc);
+	//CreateFrontsParticles (proc);
 }
 _END_EXCEPTION_HANDLING (CTOR)
+
+void MeteoObject::ok ()
+{
+	DEFAULT_OK_BLOCK
+
+	if (wnd_ == nullptr)
+		_EXC_N (NULL_WND_PTR, "Null window pointer")
+}
 
 
 MeteoObject::~MeteoObject ()
@@ -99,6 +110,8 @@ void MeteoObject::CreateMap (Direct3DProcessor* proc)
 		}
 	}*/
 
+	printf ("hMAX %f hMIN %f\n", hMAX, hMIN);
+
 	float xD = xMAX - xMIN;
 	float yD = yMAX - yMIN;
 
@@ -118,17 +131,18 @@ void MeteoObject::CreateMap (Direct3DProcessor* proc)
 			//currY = (data_.longitude (x, y) - yMIN);
 			currY = y;
 			currentVertex = {};
-			int16_t h = data_.ground (x, y);
+			float h = data_.ground (x, y);
 			currentVertex.SetPos (-REGION_X / 2.0f + REGION_X / (xD)* currX,
 								  -(REGION_Z / 2.0f) + REGION_Z / hD * h,
 								  -REGION_Y / 2.0f + REGION_Y / (yD)* currY);
-			float k = 0.5f * data_.ground (x, y) / hD + 0.5f;
+			float k = 0.5f * h / hD + 0.5f;
 			//currentVertex.SetColor (k, k, data_.ground (x, y) < 10 ? 1.0f : k, k);
-			if (h < 10) currentVertex.SetColor (0.0f, 0.5f, 1.0f, 0.5f);
+		
+			if (h < 10.0f) currentVertex.SetColor (0.0f, 0.5f, 1.0f, 0.5f);
 			else
-				if (h < 500) currentVertex.SetColor (0.0f, 0.5f, 0.0f, 0.3f);
-				else
-					currentVertex.SetColor (k, k, k, k);
+			if (h < 3000.0f) currentVertex.SetColor (0.0f, 0.5f, 0.0f, 0.3f);
+			else
+				currentVertex.SetColor (k, k, k, k);
 
 			if (y == DATA_HEIGHT - 1) currentVertex.SetColor (1.0f, 0.0f, 0.0f, 1.0f);
 
@@ -428,4 +442,24 @@ void MeteoObject::NextHour (Direct3DProcessor * proc)
 	if (currentHour_ == 25) currentHour_ = 0;
 	CreateFronts (proc);
 	front_->SetupBuffers (proc->GetDevice ());
+}
+
+void OnPoint (void* meteoObjectPtr, WPARAM wparam, LPARAM lparam)
+{
+	int x = LOWORD (lparam);
+	int y = HIWORD (lparam);
+
+	(reinterpret_cast <MeteoObject*> (meteoObjectPtr))->MouseClick (x, y);
+}
+
+void MeteoObject::MouseClick (int x, int y)
+{
+	float dx = wnd_->width ();
+	float dy = wnd_->height ();
+
+	float x_ = 2 * x / ((float)wnd_->width ()) - 1;
+	float y_ = 2 * y / ((float)wnd_->height ()) - 1;
+
+
+	printf ("Got mouse click %f %f\n", x_, y_);
 }

@@ -156,6 +156,7 @@ NZA_t::~NZA_t ()
 {
 	not_yet_destroyed_ = 0;
 }
+
 void  NZA_t::ok ()
 {
 	if (this == nullptr)
