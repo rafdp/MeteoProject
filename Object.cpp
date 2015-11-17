@@ -170,7 +170,6 @@ void Direct3DObject::Draw (ID3D11DeviceContext* deviceContext,
 	//printf ("%d\n", vertices_.size());
 	uint16_t i = rand () % vertices_.size ();
 	//printf ("%f %f %f\n", vertices_[i].x, vertices_[i].y, vertices_[i].z);
-
 	if (buffersSet_ == false)
 		_EXC_N (BUFFERS_NOT_SET, 
 				"D3D: Unable to draw with the buffers not set (obj %d)" _ 
@@ -197,7 +196,7 @@ void Direct3DObject::Draw (ID3D11DeviceContext* deviceContext,
 	currM_.objData_.World = XMMatrixTranspose (currM_.world_);
 
 
-
+	
 	cbManager_->Update (objectBufferN_, deviceContext);
 	cbManager_->SendVSBuffer (objectBufferN_, deviceContext);
 	cbManager_->SendGSBuffer (objectBufferN_, deviceContext);
@@ -465,6 +464,18 @@ void Direct3DCamera::SetPos (XMFLOAT4 pos)
 void Direct3DCamera::SetDir (XMFLOAT4 dir)
 {
 	direction_ = XMLoadFloat4 (&dir);
+}
+XMVECTOR & Direct3DCamera::GetDir ()
+{
+	return direction_;
+}
+XMVECTOR & Direct3DCamera::GetPos ()
+{
+	return position_;
+}
+float& Direct3DCamera::GetFOV ()
+{
+	return projectionSettings_.x;
 }
 void* GetValidObjectPtr ()
 {

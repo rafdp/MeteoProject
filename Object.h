@@ -31,6 +31,11 @@ public:
 	void SetPos (XMFLOAT4 pos);
 	void SetDir (XMFLOAT4 dir);
 
+	XMVECTOR& GetDir ();
+	XMVECTOR& GetPos ();
+
+	float& GetFOV ();
+
 	void TranslatePos (XMFLOAT3 move);
 	void TranslatePos (XMVECTOR move);
 	void RotateDir (float hor, float ver);

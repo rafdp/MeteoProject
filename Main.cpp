@@ -32,18 +32,16 @@ int WINAPI WinMain (HINSTANCE hInstance,
 							camPos.x, camPos.y, camPos.z,
 							0.0f, -1.0f, 1.0f,
 							0.0, 1.0f, 0.0f,
-							0.1f, 0.1f);
+							FOV, 0.1f);
 
 		ConstantBufferIndex_t camBuf = d3dProc.RegisterConstantBuffer (&camPos,
 																	   sizeof (camPos),
 																	   1);
 		d3dProc.UpdateConstantBuffer (camBuf);
 
-		MeteoObject meteo ("Data/COSMOMESH", "Data/Fronts", "Data/H", &d3dProc);
+		MeteoObject meteo ("Data/COSMOMESH", "Data/Fronts", "Data/H", &d3dProc, &cam);
 		cam.Update ();
 		
-		window.This ();
-
 		SetForegroundWindow (window.hwnd ());
 
 

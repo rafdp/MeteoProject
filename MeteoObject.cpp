@@ -1,25 +1,37 @@
 
 #include "Builder.h"
 
+//#define SPHERE_STRETCH
+
 MeteoObject::MeteoObject (std::string cosmomesh,
 					 	  std::string fronts,
 				 		  std::string height,
-			 			  Direct3DProcessor* proc)
+			 			  Direct3DProcessor* proc,
+						  Direct3DCamera* cam)
 	try :
 	dl_ (cosmomesh, fronts, height, proc),
-	object_ (),
-	front_ (),
+	object_      (),
+	front_       (),
+	shuttle_     (),
+	shuttleSet_  (),
 	currentHour_ (),
-	vertS_ (),
-	pixS_ (),
-	geoS_ (),
-	layout_ (),
-	wnd_   (proc->GetWindowPtr ())
+	vertS_       (),
+	pixS_        (),
+	geoS_        (),
+	layout_      (),
+	proc_        (proc),
+	cam_         (cam),
+	bak_         (*cam),
+	drawShuttle_ (false)
 {
-	proc->GetWindowPtr ()->SetCallbackPtr (this);
-	proc->GetWindowPtr ()->AddCallback (WM_LBUTTONDOWN, OnPoint);
-	CreateMap (proc);
-	//CreateFrontsParticles (proc);
+	ok ();
+
+	proc_->GetWindowPtr ()->SetCallbackPtr (this);
+	proc_->GetWindowPtr ()->AddCallback (WM_LBUTTONDOWN, OnPoint);
+	proc_->GetWindowPtr ()->AddCallback (WM_MOUSEWHEEL,  OnWheel);
+	proc_->GetWindowPtr ()->AddCallback (WM_KEYDOWN,     OnChar);
+	CreateMap ();
+	CreateFrontsParticles ();
 }
 _END_EXCEPTION_HANDLING (CTOR)
 
@@ -27,8 +39,8 @@ void MeteoObject::ok ()
 {
 	DEFAULT_OK_BLOCK
 
-	if (wnd_ == nullptr)
-		_EXC_N (NULL_WND_PTR, "Null window pointer")
+	if (proc_ == nullptr)
+		_EXC_N (NULL_PROC_PTR, "Null Direct3DProcessor pointer")
 }
 
 
@@ -43,32 +55,32 @@ MeteoObject::~MeteoObject ()
 	layout_ = -1;
 }
 
-void MeteoObject::LoadShadersAndLayout (Direct3DProcessor* proc)
+void MeteoObject::LoadShadersAndLayout ()
 {
 	static bool once = false;
 	if (!once) once = true;
 	else return;
 
-	vertS_ = proc->LoadShader ("shaders.hlsl",
+	vertS_ = proc_->LoadShader ("shaders.hlsl",
 							   "VShader",
 							   SHADER_VERTEX);
-	pixS_ = proc->LoadShader ("shaders.hlsl",
+	pixS_ = proc_->LoadShader ("shaders.hlsl",
 							  "PShader",
 							  SHADER_PIXEL);
-	geoS_ = proc->LoadShader ("shaders.hlsl",
+	geoS_ = proc_->LoadShader ("shaders.hlsl",
 							  "GShader",
 							  SHADER_GEOMETRY);
-	layout_ = proc->AddLayout (vertS_, true, false, false, true);
+	layout_ = proc_->AddLayout (vertS_, true, false, false, true);
 }
 
-void MeteoObject::CreateMap (Direct3DProcessor* proc)
+void MeteoObject::CreateMap ()
 {
 	BEGIN_EXCEPTION_HANDLING
 
 		XMMATRIX world = XMMatrixTranslation (0.0f, 0.0f, 0.0f);
 
 	Vertex_t currentVertex = {};
-	LoadShadersAndLayout (proc);
+	LoadShadersAndLayout ();
 
 	object_ = new (GetValidObjectPtr ())
 		Direct3DObject (world, false, true, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -94,11 +106,10 @@ void MeteoObject::CreateMap (Direct3DProcessor* proc)
 		}
 	}
 
-	//float xMIN = data_.latitude (0, 0), yMIN = data_.longitude (0, 0);
-	float xMIN = 0, yMIN = 0;
-	//float xMAX = data_.latitude (0, 0), yMAX = data_.longitude (0, 0);
-	float xMAX = DATA_WIDTH, yMAX = DATA_HEIGHT;
-	/*
+	#ifdef SPHERE_STRETCH
+	float xMIN = data_.latitude (0, 0), yMIN = data_.longitude (0, 0);
+	float xMAX = data_.latitude (0, 0), yMAX = data_.longitude (0, 0);
+	
 	for (int x = 0; x < DATA_WIDTH; x++)
 	{
 		for (int y = 0; y < DATA_HEIGHT; y++)
@@ -108,9 +119,13 @@ void MeteoObject::CreateMap (Direct3DProcessor* proc)
 			if (data_.longitude (x, y) < yMIN) yMIN = data_.longitude (x, y);
 			if (data_.longitude (x, y) > yMAX) yMAX = data_.longitude (x, y);
 		}
-	}*/
+	}
 
-	printf ("hMAX %f hMIN %f\n", hMAX, hMIN);
+	#else
+	float xMIN = 0, yMIN = 0;
+	float xMAX = DATA_WIDTH, yMAX = DATA_HEIGHT;
+
+	#endif
 
 	float xD = xMAX - xMIN;
 	float yD = yMAX - yMIN;
@@ -126,26 +141,27 @@ void MeteoObject::CreateMap (Direct3DProcessor* proc)
 	{
 		for (int y = 0; y < DATA_HEIGHT; y++)
 		{
-			//currX = (data_.latitude (x, y) - xMIN);
+#ifdef SPHERE_STRETCH
+			currX = (data_.latitude (x, y) - xMIN);
+			currY = (data_.longitude (x, y) - yMIN);
+#else
 			currX = x;
-			//currY = (data_.longitude (x, y) - yMIN);
 			currY = y;
+#endif
 			currentVertex = {};
 			float h = data_.ground (x, y);
 			currentVertex.SetPos (-REGION_X / 2.0f + REGION_X / (xD)* currX,
 								  -(REGION_Z / 2.0f) + REGION_Z / hD * h,
 								  -REGION_Y / 2.0f + REGION_Y / (yD)* currY);
 			float k = 0.5f * h / hD + 0.5f;
-			//currentVertex.SetColor (k, k, data_.ground (x, y) < 10 ? 1.0f : k, k);
 		
-			if (h < 10.0f) currentVertex.SetColor (0.0f, 0.5f, 1.0f, 0.5f);
+			if (h < 10.0f) currentVertex.SetColor (0.0f, 0.25f, 0.5f, 1.0f);
 			else
-			if (h < 3000.0f) currentVertex.SetColor (0.0f, 0.5f, 0.0f, 0.3f);
+			if (h < 3000.0f) currentVertex.SetColor (0.0f, 0.25f, 0.0f, 1.0f);
 			else
-				currentVertex.SetColor (k, k, k, k);
+				currentVertex.SetColor (k/2.0f, k / 2.0f, k / 2.0f, 1.0f);
 
-			if (y == DATA_HEIGHT - 1) currentVertex.SetColor (1.0f, 0.0f, 0.0f, 1.0f);
-
+			
 			vertices.push_back (currentVertex);
 		}
 	}
@@ -165,29 +181,27 @@ void MeteoObject::CreateMap (Direct3DProcessor* proc)
 			indices += 2;
 		}
 		indices += DATA_HEIGHT * 2 - 2;
-		//printf ("indices %d\n", indices);
-		//Sleep (100);
 	}
 
 	object_->AddIndexArray (mapping, mapSize);
-	proc->AttachShaderToObject (object_, vertS_);
-	proc->AttachShaderToObject (object_, pixS_);
-	proc->SetLayout (object_, layout_);
-	proc->RegisterObject (object_);
+	proc_->AttachShaderToObject (object_, vertS_);
+	proc_->AttachShaderToObject (object_, pixS_);
+	proc_->SetLayout (object_, layout_);
+	proc_->RegisterObject (object_);
 
 	delete[] mapping;
 
 	END_EXCEPTION_HANDLING (CREATE_OBJECTS)
 }
 
-void MeteoObject::CreateFronts (Direct3DProcessor* proc)
+void MeteoObject::CreateFronts ()
 {
 	BEGIN_EXCEPTION_HANDLING
 
 		if (front_)
 		{
 			//front_->ClearBuffers ();
-			proc->RemoveObject (front_);
+			proc_->RemoveObject (front_);
 			_aligned_free (front_);
 		}
 	XMMATRIX world = object_->GetWorld ();
@@ -203,7 +217,7 @@ void MeteoObject::CreateFronts (Direct3DProcessor* proc)
 	std::vector<Vertex_t>& vertices = front_->GetVertices ();
 	vertices.clear ();
 	vertices.reserve (DATA_WIDTH * DATA_HEIGHT);
-	LoadShadersAndLayout (proc);
+	LoadShadersAndLayout ();
 
 	MeteoData_t& data_ = dl_.data_;
 
@@ -211,8 +225,26 @@ void MeteoObject::CreateFronts (Direct3DProcessor* proc)
 	float hMIN = data_.ground (0, 0);
 	float hMAX = data_.height (0, 0, 0, currentHour_);
 
+#ifdef SPHERE_STRETCH
 	float xMIN = data_.latitude (0, 0), yMIN = data_.longitude (0, 0);
 	float xMAX = data_.latitude (0, 0), yMAX = data_.longitude (0, 0);
+
+	for (int x = 0; x < DATA_WIDTH; x++)
+	{
+		for (int y = 0; y < DATA_HEIGHT; y++)
+		{
+			if (data_.latitude (x, y) < xMIN) xMIN = data_.latitude (x, y);
+			if (data_.latitude (x, y) > xMAX) xMAX = data_.latitude (x, y);
+			if (data_.longitude (x, y) < yMIN) yMIN = data_.longitude (x, y);
+			if (data_.longitude (x, y) > yMAX) yMAX = data_.longitude (x, y);
+		}
+	}
+
+#else
+	float xMIN = 0, yMIN = 0;
+	float xMAX = DATA_WIDTH, yMAX = DATA_HEIGHT;
+
+#endif
 
 	float midSliceHeight[SLICES] = {};
 
@@ -253,8 +285,13 @@ void MeteoObject::CreateFronts (Direct3DProcessor* proc)
 		printf ("%f %%\n", x / (0.01f * DATA_WIDTH));
 		for (int y = 0; y < DATA_HEIGHT; y++)
 		{
+#ifdef SPHERE_STRETCH
 			currX = (data_.latitude (x, y) - xMIN);
 			currY = (data_.longitude (x, y) - yMIN);
+#else
+			currX = x;
+			currY = y;
+#endif
 			for (uint8_t i = 0; i < SLICES; i++)
 			{
 				{
@@ -292,24 +329,24 @@ void MeteoObject::CreateFronts (Direct3DProcessor* proc)
 
 		}
 	}
-	proc->AttachShaderToObject (front_, vertS_);
-	proc->AttachShaderToObject (front_, pixS_);
-	proc->AttachShaderToObject (front_, geoS_);
-	proc->SetLayout (front_, layout_);
-	proc->RegisterObject (front_);
+	proc_->AttachShaderToObject (front_, vertS_);
+	proc_->AttachShaderToObject (front_, pixS_);
+	proc_->AttachShaderToObject (front_, geoS_);
+	proc_->SetLayout (front_, layout_);
+	proc_->RegisterObject (front_);
 
 	END_EXCEPTION_HANDLING (BUILD_FRONT)
 }
 
 
-void MeteoObject::CreateFrontsParticles (Direct3DProcessor* proc)
+void MeteoObject::CreateFrontsParticles ()
 {
 	BEGIN_EXCEPTION_HANDLING
 
 	if (front_)
 	{
 		//front_->ClearBuffers ();
-		proc->RemoveObject (front_);
+		proc_->RemoveObject (front_);
 		_aligned_free (front_);
 	}
 	XMMATRIX world = object_->GetWorld ();
@@ -322,36 +359,48 @@ void MeteoObject::CreateFrontsParticles (Direct3DProcessor* proc)
 
 	std::vector<Vertex_t>& vertices = front_->GetVertices ();
 	vertices.clear ();
-	LoadShadersAndLayout (proc);
+	LoadShadersAndLayout ();
 
 	MeteoData_t& data_ = dl_.data_;
 
 
 	float hMIN = data_.ground (0, 0);
 	float hMAX = data_.height (0, 0, 0, currentHour_);
-
-	//float xMIN = data_.latitude (0, 0), yMIN = data_.longitude (0, 0);
-	float xMIN = 0, yMIN = 0;
-	//float xMAX = data_.latitude (0, 0), yMAX = data_.longitude (0, 0);
-	float xMAX = DATA_WIDTH, yMAX = DATA_HEIGHT;
 	float midSliceHeight[SLICES] = {};
-
+#ifdef SPHERE_STRETCH
+	float xMIN = data_.latitude (0, 0), yMIN = data_.longitude (0, 0);
+	float xMAX = data_.latitude (0, 0), yMAX = data_.longitude (0, 0);
+	
 	for (int x = 0; x < DATA_WIDTH; x++)
 	{
 		for (int y = 0; y < DATA_HEIGHT; y++)
 		{
-			//if (data_.latitude (x, y) < xMIN) xMIN = data_.latitude (x, y);
-			//if (data_.latitude (x, y) > xMAX) xMAX = data_.latitude (x, y);
-			//if (data_.longitude (x, y) < yMIN) yMIN = data_.longitude (x, y);
-			//if (data_.longitude (x, y) > yMAX) yMAX = data_.longitude (x, y);
+			if (data_.latitude (x, y) < xMIN) xMIN = data_.latitude (x, y);
+			if (data_.latitude (x, y) > xMAX) xMAX = data_.latitude (x, y);
+			if (data_.longitude (x, y) < yMIN) yMIN = data_.longitude (x, y);
+			if (data_.longitude (x, y) > yMAX) yMAX = data_.longitude (x, y);
 			float midH = 0.0f;
 			for (int i = 0; i < SLICES; i++)
 				midSliceHeight[i] += data_.height (x, y, i, currentHour_) / (1.0f * DATA_WIDTH * DATA_HEIGHT);
 		}
 	}
+#else
+	float xMIN = 0, yMIN = 0;
+	float xMAX = DATA_WIDTH, yMAX = DATA_HEIGHT;
+	
+	for (int x = 0; x < DATA_WIDTH; x++)
+	{
+		for (int y = 0; y < DATA_HEIGHT; y++)
+		{
+			float midH = 0.0f;
+			for (int i = 0; i < SLICES; i++)
+				midSliceHeight[i] += data_.height (x, y, i, currentHour_) / (1.0f * DATA_WIDTH * DATA_HEIGHT);
+		}
+	}
+
+#endif
 	float xD = xMAX - xMIN;
 	float yD = yMAX - yMIN;
-	//float midSliceHeight[SLICES] = {};
 
 	for (int x = 0; x < DATA_WIDTH; x++)
 	{
@@ -370,13 +419,15 @@ void MeteoObject::CreateFrontsParticles (Direct3DProcessor* proc)
 	float currX = 0.0f, currY = 0.0f;
 	for (int x = 0; x < DATA_WIDTH; x++)
 	{
-		//printf ("%f %%\n", x / (0.01f * DATA_WIDTH));
 		for (int y = 0; y < DATA_HEIGHT; y++)
 		{
-			//currX = (data_.latitude (x, y) - xMIN);
+#ifdef SPHERE_STRETCH
+			currX = (data_.latitude (x, y) - xMIN);
+			currY = (data_.longitude (x, y) - yMIN);
+#else
 			currX = x;
-			//currY = (data_.longitude (x, y) - yMIN);
 			currY = y;
+#endif
 			for (uint8_t i = 0; i < SLICES; i++)
 			{
 				{
@@ -419,11 +470,11 @@ void MeteoObject::CreateFrontsParticles (Direct3DProcessor* proc)
 
 		}
 	}
-	proc->AttachShaderToObject (front_, vertS_);
-	proc->AttachShaderToObject (front_, pixS_);
-	proc->AttachShaderToObject (front_, geoS_);
-	proc->SetLayout (front_, layout_);
-	proc->RegisterObject (front_);
+	proc_->AttachShaderToObject (front_, vertS_);
+	proc_->AttachShaderToObject (front_, pixS_);
+	proc_->AttachShaderToObject (front_, geoS_);
+	proc_->SetLayout (front_, layout_);
+	proc_->RegisterObject (front_);
 
 	END_EXCEPTION_HANDLING (BUILD_FRONT)
 }
@@ -436,12 +487,12 @@ void MeteoObject::Rotate ()
 		front_->GetWorld () *= XMMatrixRotationY (0.01f);
 }
 
-void MeteoObject::NextHour (Direct3DProcessor * proc)
+void MeteoObject::NextHour ()
 {
 	currentHour_++;
 	if (currentHour_ == 25) currentHour_ = 0;
-	CreateFronts (proc);
-	front_->SetupBuffers (proc->GetDevice ());
+	CreateFronts ();
+	front_->SetupBuffers (proc_->GetDevice ());
 }
 
 void OnPoint (void* meteoObjectPtr, WPARAM wparam, LPARAM lparam)
@@ -452,14 +503,131 @@ void OnPoint (void* meteoObjectPtr, WPARAM wparam, LPARAM lparam)
 	(reinterpret_cast <MeteoObject*> (meteoObjectPtr))->MouseClick (x, y);
 }
 
+void OnWheel (void* meteoObjectPtr, WPARAM wparam, LPARAM lparam)
+{
+	int d = GET_WHEEL_DELTA_WPARAM (wparam);
+
+	(reinterpret_cast <MeteoObject*> (meteoObjectPtr))->MouseWheel (-d);
+}
+
+void OnChar (void* meteoObjectPtr, WPARAM wparam, LPARAM lparam)
+{
+	if (wparam != VK_TAB) return;
+
+	(reinterpret_cast <MeteoObject*> (meteoObjectPtr))->SwitchCams ();
+}
+
+void MeteoObject::SwitchCams ()
+{
+	BEGIN_EXCEPTION_HANDLING
+
+	//printf ("CAPS %d\n", (GetKeyState (VK_CAPITAL) & 0x1));
+
+	if (!drawShuttle_)
+	{
+		if (!shuttleSet_) return;
+		drawShuttle_ = true;
+
+		bak_ = *cam_;
+		Vertex_t& tempV = shuttle_->GetVertices ()[0];
+		XMFLOAT3 tempFloat = { tempV.x, tempV.y, tempV.z };
+		XMVECTOR vec = XMLoadFloat3 (&tempFloat);
+
+		cam_->GetPos () = vec;
+		cam_->GetFOV () *= 2;
+
+		proc_->RemoveObject (shuttle_);
+
+		return;
+	}
+
+	Vertex_t& tempV = shuttle_->GetVertices ()[0];
+	XMFLOAT3 tempFloat = {};
+	XMStoreFloat3 (&tempFloat, cam_->GetPos ());
+
+	tempV.SetPos (tempFloat.x, tempFloat.y, tempFloat.z);
+
+	*cam_ = bak_;
+	proc_->RegisterObject (shuttle_);
+	drawShuttle_ = false;
+
+	END_EXCEPTION_HANDLING (SWITCH_CAMS)
+}
+
 void MeteoObject::MouseClick (int x, int y)
 {
-	float dx = wnd_->width ();
-	float dy = wnd_->height ();
+	BEGIN_EXCEPTION_HANDLING
+	if (drawShuttle_) return;
 
-	float x_ = 2 * x / ((float)wnd_->width ()) - 1;
-	float y_ = 2 * y / ((float)wnd_->height ()) - 1;
+	XMVECTOR view = XMVectorSet ((2 * x / ((float)proc_->GetWindowPtr ()->width ()) - 1) / cam_->GetProjection () (0, 0), 
+								 (1 - 2 * y / ((float)proc_->GetWindowPtr ()->height ())) / cam_->GetProjection () (1, 1),
+								 1.0f,
+								 0.0f);
+
+	XMVECTOR vec = XMVectorSet (0.0f, 0.0f, 0.0f, 0.0f);
+	if (!cam_) return;
+		view = XMVector3TransformCoord (view, XMMatrixInverse (&vec, cam_->GetView ()));
 
 
-	printf ("Got mouse click %f %f\n", x_, y_);
+	XMFLOAT3 pos = {};
+	XMStoreFloat3 (&pos, view);
+
+	Vertex_t vert = {};
+	vert.SetPos (pos.x, pos.y, pos.z);
+	vert.SetColor (1.0f, 1.0f, 0.0f, 1.0f);
+
+	if (!shuttleSet_)
+	{
+		if (shuttle_)
+			_EXC_N (SHUTTLE_SET, "Shuttle not null")
+
+		XMMATRIX world = XMMatrixIdentity ();
+
+		shuttle_ = new (GetValidObjectPtr ())
+			Direct3DObject (world, false, false, D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+
+		//obj->AddVertexArray (&vert, 1);
+		shuttle_->GetVertices ().push_back (vert);
+		proc_->AttachShaderToObject (shuttle_, vertS_);
+		proc_->AttachShaderToObject (shuttle_, pixS_);
+		proc_->AttachShaderToObject (shuttle_, geoS_);
+		proc_->SetLayout (shuttle_, layout_);
+		proc_->RegisterObject (shuttle_);
+		shuttle_->SetupBuffers (proc_->GetDevice ());
+		shuttleSet_ = true;
+	}
+	else
+	{
+		if (!shuttle_)
+			_EXC_N (SHUTTLE_SET, "Shuttle null")
+		shuttle_->GetVertices ()[0] = vert;
+		shuttle_->SetupBuffers (proc_->GetDevice ());
+	}
+
+	END_EXCEPTION_HANDLING (MOUSE_CLICK)
+}
+
+
+void MeteoObject::MouseWheel (int d)
+{
+	BEGIN_EXCEPTION_HANDLING
+	if (!shuttleSet_ || drawShuttle_) return;
+	if (!shuttle_)
+		_EXC_N (SHUTTLE_SET, "Shuttle null")
+	Vertex_t& currentVertex = shuttle_->GetVertices ()[0];
+	XMVECTOR vec = XMVectorSet (currentVertex.x, currentVertex.y, currentVertex.z, 1.0f);
+	
+	XMVECTOR dir = vec - cam_->GetPos ();
+
+	vec += XMVector4Normalize (dir) * d / 1000.0f;
+	XMFLOAT3 back = {};
+	XMStoreFloat3 (&back, vec);
+
+	currentVertex.x = back.x;
+	currentVertex.y = back.y;
+	currentVertex.z = back.z;
+
+	shuttle_->SetupBuffers (proc_->GetDevice ());
+
+	END_EXCEPTION_HANDLING (MOUSE_WHEEL)
 }

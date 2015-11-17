@@ -111,7 +111,11 @@ enum ERRORS
 	E (116, CREATE_OBJECTS)
 	E (117, NULL_FRONT_OBJECT)
 	E (118, BUILD_FRONT)
-	E (119, NULL_WND_PTR)
+	E (119, SHUTTLE_SET)
+	E (120, MOUSE_CLICK)
+	E (121, SHUTTLE_NOT_SET)
+	E (122, MOUSE_WHEEL)
+	E (123, SWITCH_CAMS)
 };
 
 const wchar_t  APPLICATION_TITLE_W[] = L"MeteoProject";
@@ -125,6 +129,7 @@ void PrintfProgressBar (uint64_t progress, uint64_t full);
 
 const UINT SCREEN_WIDTH  = GetSystemMetrics (SM_CXSCREEN);
 const UINT SCREEN_HEIGHT = GetSystemMetrics (SM_CYSCREEN);
+const float FOV = 0.1f;
 
 
 class ExceptionData_t;
