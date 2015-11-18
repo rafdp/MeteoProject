@@ -74,3 +74,35 @@ void GShader (point GS_INPUT input[1],
 	OutputStream.Append (output[4]);
 	OutputStream.Append (output[5]);
 }
+
+[maxvertexcount (6)]
+void GShaderShuttle (point GS_INPUT input[1],
+			  inout TriangleStream<PS_INPUT> OutputStream)
+{
+	PS_INPUT output[6];
+
+	float3 normal = normalize (CamPos.xyz - input[0].worldPos.xyz);
+	float zPerpendicular = -normal.y / normal.z;
+	float3 upAxis = normalize (float3 (0.0f, 1.0f, zPerpendicular));
+	float3 rightAxis = normalize (cross (normal, upAxis));
+
+	float d = 0.0015;
+
+	for (int i = 0; i < 6; i++)
+		output[i].color = input[0].color;
+	output[1].position = mul (float4 (input[0].worldPos.xyz + (upAxis - rightAxis) * d, 1.0f), VP);
+	output[0].position = mul (float4 (input[0].worldPos.xyz + (upAxis + rightAxis) * d, 1.0f), VP);
+	output[2].position = mul (float4 (input[0].worldPos.xyz + (-upAxis + rightAxis) * d, 1.0f), VP);
+
+	output[3].position = mul (float4 (input[0].worldPos.xyz + (upAxis - rightAxis) * d, 1.0f), VP);
+	output[4].position = mul (float4 (input[0].worldPos.xyz + (-upAxis - rightAxis) * d, 1.0f), VP);
+	output[5].position = mul (float4 (input[0].worldPos.xyz + (-upAxis + rightAxis) * d, 1.0f), VP);
+
+	OutputStream.Append (output[0]);
+	OutputStream.Append (output[1]);
+	OutputStream.Append (output[2]);
+	OutputStream.RestartStrip ();
+	OutputStream.Append (output[3]);
+	OutputStream.Append (output[4]);
+	OutputStream.Append (output[5]);
+}

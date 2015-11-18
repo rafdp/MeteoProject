@@ -13,6 +13,7 @@ class MeteoObject : NZA_t
 	ShaderIndex_t vertS_;
 	ShaderIndex_t pixS_;
 	ShaderIndex_t geoS_;
+	ShaderIndex_t geoShuttleS_;
 	LayoutIndex_t layout_;
 	Direct3DProcessor* proc_;
 	Direct3DCamera* cam_;

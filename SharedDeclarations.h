@@ -129,7 +129,7 @@ void PrintfProgressBar (uint64_t progress, uint64_t full);
 
 const UINT SCREEN_WIDTH  = GetSystemMetrics (SM_CXSCREEN);
 const UINT SCREEN_HEIGHT = GetSystemMetrics (SM_CYSCREEN);
-const float FOV = 0.1f;
+const float FOV = 0.15f;
 
 
 class ExceptionData_t;

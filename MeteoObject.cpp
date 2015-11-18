@@ -18,6 +18,7 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	vertS_       (),
 	pixS_        (),
 	geoS_        (),
+	geoShuttleS_ (),
 	layout_      (),
 	proc_        (proc),
 	cam_         (cam),
@@ -70,6 +71,11 @@ void MeteoObject::LoadShadersAndLayout ()
 	geoS_ = proc_->LoadShader ("shaders.hlsl",
 							  "GShader",
 							  SHADER_GEOMETRY);
+
+	geoShuttleS_ = proc_->LoadShader ("shaders.hlsl",
+									  "GShaderShuttle",
+									  SHADER_GEOMETRY);
+
 	layout_ = proc_->AddLayout (vertS_, true, false, false, true);
 }
 
@@ -534,7 +540,6 @@ void MeteoObject::SwitchCams ()
 		XMVECTOR vec = XMLoadFloat3 (&tempFloat);
 
 		cam_->GetPos () = vec;
-		cam_->GetFOV () *= 2;
 
 		proc_->RemoveObject (shuttle_);
 
@@ -590,7 +595,7 @@ void MeteoObject::MouseClick (int x, int y)
 		shuttle_->GetVertices ().push_back (vert);
 		proc_->AttachShaderToObject (shuttle_, vertS_);
 		proc_->AttachShaderToObject (shuttle_, pixS_);
-		proc_->AttachShaderToObject (shuttle_, geoS_);
+		proc_->AttachShaderToObject (shuttle_, geoShuttleS_);
 		proc_->SetLayout (shuttle_, layout_);
 		proc_->RegisterObject (shuttle_);
 		shuttle_->SetupBuffers (proc_->GetDevice ());

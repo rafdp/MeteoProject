@@ -27,7 +27,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 
 		
 		//XMMATRIX world = XMMatrixTranslation (0.0f, 0.0f, 0.0f);
-		XMFLOAT4 camPos = { 0.0f, 4.0f, -4.0f, 1.0f };
+		XMFLOAT4 camPos = { 0.0f, 2.0f, -2.0f, 1.0f };
 		Direct3DCamera cam (&window,
 							camPos.x, camPos.y, camPos.z,
 							0.0f, -1.0f, 1.0f,
@@ -161,6 +161,17 @@ void ProcessCam (Direct3DCamera* cam)
 	{
 		cam->SetPos ({0.0f, 4.0f, -4.0f, 1.0f});
 		cam->SetDir ({ 0.0f, -4.0f, 4.0f, 1.0f});
+	}
+	if (GetAsyncKeyState ('M'))
+	{
+		if (cam->GetFOV () < 0.9)
+			cam->GetFOV () += 0.01;
+	}
+	if (GetAsyncKeyState ('L'))
+	{
+		if (cam->GetFOV () > 0.025)
+			cam->GetFOV () -= 0.01;
+		printf ("%f\n", cam->GetFOV ());
 	}
 	if (GetAsyncKeyState (VK_UP))
 	{
