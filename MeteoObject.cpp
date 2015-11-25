@@ -33,6 +33,7 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	proc_->GetWindowPtr ()->AddCallback (WM_KEYDOWN,     OnChar);
 	CreateMap ();
 	CreateFrontsParticles ();
+	
 }
 _END_EXCEPTION_HANDLING (CTOR)
 
@@ -586,7 +587,7 @@ void MeteoObject::MouseClick (int x, int y)
 		if (shuttle_)
 			_EXC_N (SHUTTLE_SET, "Shuttle not null")
 
-		XMMATRIX world = XMMatrixIdentity ();
+		XMMATRIX world = XMMatrixIdentity (); 
 
 		shuttle_ = new (GetValidObjectPtr ())
 			Direct3DObject (world, false, false, D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);

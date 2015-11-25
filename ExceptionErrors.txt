@@ -1,7 +1,7 @@
-Exception with error code 36,
-error message: "void __thiscall Direct3DProcessor::Present(void): Error occurred"
-occurred in file: "\psf\home\documents\meteoprojectgit\meteoproject\direct3dprocessor.cpp" on line 132
+Exception with error code 120,
+error message: "void __thiscall MeteoObject::MouseClick(int,int): Error occurred: Error occurred: Error occurred: Error occurred"
+occurred in file: "\psf\home\documents\meteoprojectgit\meteoproject\meteoobject.cpp" on line 609
 caused by:
-Exception with error code 37,
-error message: "D3D: Swap chain present failed (0x87a0001)"
-occurred in file: "\psf\home\documents\meteoprojectgit\meteoproject\direct3dprocessor.cpp" on line 131
+Exception with error code 119,
+error message: "Shuttle not null"
+occurred in file: "\psf\home\documents\meteoprojectgit\meteoproject\meteoobject.cpp" on line 584

@@ -11,12 +11,18 @@ int WINAPI WinMain (HINSTANCE hInstance,
 					int nCmdShow)
 {
 	__EXPN__ = new ExceptionData_t (20, "ExceptionErrors.txt");
-	srand (static_cast<UINT>(time (NULL)));
+	srand (static_cast<UINT>(time (nullptr)));
+
+	
 
 	try
 	{
 		WindowClass window (int (SCREEN_WIDTH * 0.98f), int (SCREEN_HEIGHT * 0.9f));
 		AllocConsole ();
+
+		
+		
+
 		FILE* file = nullptr;
 		freopen_s (&file, "CONOUT$", "w", stdout);
 
@@ -41,7 +47,6 @@ int WINAPI WinMain (HINSTANCE hInstance,
 
 		MeteoObject meteo ("Data/COSMOMESH", "Data/Fronts", "Data/H", &d3dProc, &cam);
 		cam.Update ();
-		
 		SetForegroundWindow (window.hwnd ());
 
 
@@ -58,7 +63,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 		int hour = 0;
 		while (true)
 		{
-			if (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE))
+			if (PeekMessage (&msg, nullptr, 0, 0, PM_REMOVE))
 			{
 				TranslateMessage (&msg);
 				DispatchMessage (&msg);
