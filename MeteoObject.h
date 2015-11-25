@@ -28,7 +28,7 @@ class MeteoObject : NZA_t
 				 Direct3DProcessor* proc,
 				 Direct3DCamera* cam);
 
-	void ok ();
+	void ok () override;
 	~MeteoObject ();
 	void LoadShadersAndLayout ();
 
@@ -49,4 +49,6 @@ class MeteoObject : NZA_t
 	void MouseClick (int x, int y);
 	void MouseWheel (int d);
 	void SwitchCams ();
+
+	void Create3dTexture ();
 };

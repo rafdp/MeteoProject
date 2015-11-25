@@ -28,6 +28,7 @@ try :
 	depthStencilStates_    (),
 	rasterizerStates_      (),
 	layouts_               (),
+	toDelete_              (),
 	objects_               (),
 	shaderManager_         (),
 	currentVertexShader_   (-1),
@@ -73,6 +74,10 @@ Direct3DProcessor::~Direct3DProcessor ()
 			      i < rasterizerStates_.end ();
 				  i++)
 				 (*i)->Release ();
+		for (auto i = toDelete_.begin();
+				  i < toDelete_.end();
+					  i++)
+					  (*i)->Release();
 
 		for (auto i = objects_.begin ();
 				  i < objects_.end ();
@@ -722,6 +727,11 @@ WindowClass * Direct3DProcessor::GetWindowPtr ()
 	return wnd_;
 }
 
+void Direct3DProcessor::AddToDelete(IUnknown* ptr)
+{
+	if (ptr)
+		toDelete_.push_back(ptr);
+}
 
 void Direct3DProcessor::EnableObjectSettings (Direct3DObject* obj)
 {

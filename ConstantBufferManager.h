@@ -14,7 +14,7 @@ class Direct3DConstantBufferManager : NZA_t
 {
 	std::vector<BufferInfo_t> buffers_;
 public:
-	void ok ();
+	void ok () override;
 	Direct3DConstantBufferManager ();
 	~Direct3DConstantBufferManager ();
 

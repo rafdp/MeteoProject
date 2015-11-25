@@ -1,5 +1,6 @@
 
 #include "Builder.h"
+#include <xnamath.h>
 
 //#define SPHERE_STRETCH
 
@@ -558,6 +559,43 @@ void MeteoObject::SwitchCams ()
 	drawShuttle_ = false;
 
 	END_EXCEPTION_HANDLING (SWITCH_CAMS)
+}
+
+void MeteoObject::Create3dTexture()
+{
+	BEGIN_EXCEPTION_HANDLING
+
+	D3D11_TEXTURE3D_DESC desc = {};
+	desc.Width = DATA_WIDTH;
+	desc.Height = DATA_HEIGHT;
+	desc.MipLevels = 1;
+	desc.Depth = SLICES;
+	desc.Format = DXGI_FORMAT_R8G8B8A8_UINT;
+	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+	desc.CPUAccessFlags = 0;
+	desc.MiscFlags = 0;
+
+
+	D3D11_SUBRESOURCE_DATA initData = {dl_.Offset (0, 0, 0, currentHour_), DATA_WIDTH * sizeof (XMFLOAT4), DATA_WIDTH * DATA_WIDTH * sizeof(XMFLOAT4) };
+	
+	HRESULT result = S_OK;
+
+	ID3D11Texture3D* tex = nullptr;
+	result = proc_->GetDevice()->CreateTexture3D(&desc, &initData, &tex);
+
+	if (result != S_OK)
+		_EXC_N (CREATE_3D_TEXTURE_D3D, "Meteo object: Failed to create texture3D (0x%x)" _ result)
+	ID3D11RenderTargetView  *pRTV = nullptr;
+	result = proc_->GetDevice()->CreateRenderTargetView(tex, nullptr, &pRTV);
+
+	if (result != S_OK)
+		_EXC_N(CREATE_RENDER_TARGET, "Meteo object: Failed to create render target view (0x%x)" _ result)
+
+	proc_->AddToDelete (tex);
+	proc_->AddToDelete (pRTV);
+
+	END_EXCEPTION_HANDLING (CREATE_3D_TEXTURE)
 }
 
 void MeteoObject::MouseClick (int x, int y)

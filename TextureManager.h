@@ -9,7 +9,7 @@ class Direct3DTextureManager : NZA_t
 	std::map<std::string, TextureIndex_t> loaded_;
 
 public:
-	void ok ();
+	void ok () override;
 	Direct3DTextureManager ();
 	~Direct3DTextureManager ();
 

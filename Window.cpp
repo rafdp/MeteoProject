@@ -107,7 +107,7 @@ void WindowClass::CreateWin32Window ()
 
 void WindowClass::ProcessMessageCallback (UINT msg, WPARAM wparam, LPARAM lparam)
 {
-	auto found = callbacks_.find (msg);
+	auto found = callbacks_.size() > 0 ? callbacks_.find (msg) : callbacks_.end ();
 	if (found != callbacks_.end ())
 		(*found->second) (callbackPtr_, wparam, lparam);
 

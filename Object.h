@@ -14,7 +14,7 @@ class Direct3DCamera : NZA_t
 	XMMATRIX projection_;
 
 public:
-	void ok ();
+	void ok () override;
 
 	Direct3DCamera (WindowClass* wnd,
 					float posX, float posY, float posZ,
@@ -119,7 +119,7 @@ class Direct3DObject : NZA_t
 
 	void SetID (uint64_t id);
 
-	void ok ();
+	void ok () override;
 
 	void SaveLayout (LayoutIndex_t n);
 

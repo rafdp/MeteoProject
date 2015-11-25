@@ -28,7 +28,7 @@ public:
 	Direct3DShaderManager ();
 	~Direct3DShaderManager ();
 
-	void ok ();
+	void ok () override;
 
 	ShaderIndex_t LoadShader (std::string filename,
 							  std::string function,

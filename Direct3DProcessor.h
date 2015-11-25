@@ -22,6 +22,7 @@ class Direct3DProcessor : NZA_t
 	std::vector<ID3D11BlendState*>        blendStates_;
 	std::vector<ID3D11SamplerState*>      samplerStates_;
 	std::vector<ID3D11InputLayout*>       layouts_;
+	std::vector<IUnknown*>                toDelete_;
 
 	std::vector<Direct3DObject*> objects_;
 	Direct3DShaderManager        shaderManager_;
@@ -41,7 +42,7 @@ class Direct3DProcessor : NZA_t
 	
 
 public:
-	void ok ();
+	void ok () override;
 
 	Direct3DProcessor (WindowClass* wnd, uint8_t buffers = 1);
 	~Direct3DProcessor ();
@@ -106,4 +107,6 @@ public:
 	ID3D11Device* GetDevice ();
 
 	WindowClass* GetWindowPtr ();
+
+	void AddToDelete (IUnknown* ptr);
 };

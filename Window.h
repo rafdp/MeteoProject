@@ -21,7 +21,7 @@ private:
 								 LPARAM lparam);
 
 public:
-	void ok ();
+	void ok () override;
 	WindowClass (int width, 
 				 int height);
 	~WindowClass ();
@@ -38,7 +38,7 @@ public:
 											LPARAM lparam);
 
 	void AddCallback (UINT msg, void (*f) (void*, WPARAM, LPARAM));
-	void WindowClass::SetCallbackPtr (void* ptr);
+	void SetCallbackPtr (void* ptr);
 
 	void This ();
 

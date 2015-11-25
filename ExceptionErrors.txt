@@ -1,7 +1,11 @@
-Exception with error code 120,
-error message: "void __thiscall MeteoObject::MouseClick(int,int): Error occurred: Error occurred: Error occurred: Error occurred"
-occurred in file: "\psf\home\documents\meteoprojectgit\meteoproject\meteoobject.cpp" on line 609
+Exception with error code 15,
+error message: "__cdecl MeteoObject::MeteoObject(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class Direct3DProcessor *,class Direct3DCamera *): Error occurred"
+occurred in file: "c:\users\raffaele\documents\meteoproj\meteoproject\meteoobject.cpp" on line 38
 caused by:
-Exception with error code 119,
-error message: "Shuttle not null"
-occurred in file: "\psf\home\documents\meteoprojectgit\meteoproject\meteoobject.cpp" on line 584
+Exception with error code 15,
+error message: "__cdecl MeteoDataLoader::MeteoDataLoader(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class Direct3DProcessor *): Error occurred"
+occurred in file: "c:\users\raffaele\documents\meteoproj\meteoproject\dataloader.cpp" on line 42
+caused by:
+Exception with error code 16,
+error message: "Failed to open file "Data/COSMOMESH""
+occurred in file: "c:\users\raffaele\documents\meteoproj\meteoproject\dataloader.cpp" on line 16
