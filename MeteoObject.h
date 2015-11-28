@@ -15,6 +15,8 @@ class MeteoObject : NZA_t
 	ShaderIndex_t geoS_;
 	ShaderIndex_t geoShuttleS_;
 	LayoutIndex_t layout_;
+    TextureIndex_t texture_;
+	SamplerIndex_t sampler_;
 	Direct3DProcessor* proc_;
 	Direct3DCamera* cam_;
 	Direct3DCamera bak_;
@@ -32,13 +34,13 @@ class MeteoObject : NZA_t
 	~MeteoObject ();
 	void LoadShadersAndLayout ();
 
-	void CreateMap ();
-	void CreateFronts ();
-	void CreateFrontsParticles ();
+	//void CreateMap ();
+	//void CreateFronts ();
+	//void CreateFrontsParticles ();
 
 	void Rotate ();
 
-	void NextHour ();
+	//void NextHour ();
 
 	//float FrontPower (float x, float y, float z);
 
@@ -51,4 +53,6 @@ class MeteoObject : NZA_t
 	void SwitchCams ();
 
 	void Create3dTexture ();
+
+	void PreDraw ();
 };

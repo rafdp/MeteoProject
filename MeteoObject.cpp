@@ -20,7 +20,9 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	pixS_        (),
 	geoS_        (),
 	geoShuttleS_ (),
+	texture_     (),
 	layout_      (),
+	sampler_     (),
 	proc_        (proc),
 	cam_         (cam),
 	bak_         (*cam),
@@ -32,8 +34,11 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	proc_->GetWindowPtr ()->AddCallback (WM_LBUTTONDOWN, OnPoint);
 	proc_->GetWindowPtr ()->AddCallback (WM_MOUSEWHEEL,  OnWheel);
 	proc_->GetWindowPtr ()->AddCallback (WM_KEYDOWN,     OnChar);
-	CreateMap ();
-	CreateFrontsParticles ();
+	sampler_ = proc_->AddSamplerState(D3D11_TEXTURE_ADDRESS_CLAMP);
+
+	Create3dTexture ();
+	//CreateMap ();
+	//CreateFrontsParticles ();
 	
 }
 _END_EXCEPTION_HANDLING (CTOR)
@@ -81,7 +86,7 @@ void MeteoObject::LoadShadersAndLayout ()
 	layout_ = proc_->AddLayout (vertS_, true, false, false, true);
 }
 
-void MeteoObject::CreateMap ()
+/*void MeteoObject::CreateMap ()
 {
 	BEGIN_EXCEPTION_HANDLING
 
@@ -200,9 +205,9 @@ void MeteoObject::CreateMap ()
 	delete[] mapping;
 
 	END_EXCEPTION_HANDLING (CREATE_OBJECTS)
-}
+}*/
 
-void MeteoObject::CreateFronts ()
+/*void MeteoObject::CreateFronts ()
 {
 	BEGIN_EXCEPTION_HANDLING
 
@@ -344,10 +349,10 @@ void MeteoObject::CreateFronts ()
 	proc_->RegisterObject (front_);
 
 	END_EXCEPTION_HANDLING (BUILD_FRONT)
-}
+}*/
 
 
-void MeteoObject::CreateFrontsParticles ()
+/*void MeteoObject::CreateFrontsParticles ()
 {
 	BEGIN_EXCEPTION_HANDLING
 
@@ -485,7 +490,7 @@ void MeteoObject::CreateFrontsParticles ()
 	proc_->RegisterObject (front_);
 
 	END_EXCEPTION_HANDLING (BUILD_FRONT)
-}
+}*/
 
 void MeteoObject::Rotate ()
 {
@@ -494,14 +499,14 @@ void MeteoObject::Rotate ()
 	if (front_)
 		front_->GetWorld () *= XMMatrixRotationY (0.01f);
 }
-
+/*
 void MeteoObject::NextHour ()
 {
 	currentHour_++;
 	if (currentHour_ == 25) currentHour_ = 0;
 	CreateFronts ();
 	front_->SetupBuffers (proc_->GetDevice ());
-}
+}*/
 
 void OnPoint (void* meteoObjectPtr, WPARAM wparam, LPARAM lparam)
 {
@@ -565,6 +570,8 @@ void MeteoObject::Create3dTexture()
 {
 	BEGIN_EXCEPTION_HANDLING
 
+	dl_.Float2Color ();
+
 	D3D11_TEXTURE3D_DESC desc = {};
 	desc.Width = DATA_WIDTH;
 	desc.Height = DATA_HEIGHT;
@@ -590,12 +597,30 @@ void MeteoObject::Create3dTexture()
 	result = proc_->GetDevice()->CreateRenderTargetView(tex, nullptr, &pRTV);
 
 	if (result != S_OK)
-		_EXC_N(CREATE_RENDER_TARGET, "Meteo object: Failed to create render target view (0x%x)" _ result)
+		_EXC_N(CREATE_RENDER_TARGET_VIEW, "Meteo object: Failed to create render target view (0x%x)" _ result)
 
 	proc_->AddToDelete (tex);
 	proc_->AddToDelete (pRTV);
 
+	ID3D11ShaderResourceView* srv = nullptr;
+
+	result = proc_->GetDevice()->CreateShaderResourceView (tex, nullptr, &srv);
+	if (result != S_OK)
+		_EXC_N(CREATE_SHADER_RESOURCE_VIEW, "Meteo object: Failed to create shader resource view (0x%x)" _ result)
+
+	texture_ = proc_->GetTextureManager().RegisterTexture (srv);
+
 	END_EXCEPTION_HANDLING (CREATE_3D_TEXTURE)
+}
+
+void MeteoObject::PreDraw()
+{
+	BEGIN_EXCEPTION_HANDLING
+
+	proc_->SendTextureToPS (texture_, 7);
+	proc_->SendSamplerStateToPS (sampler_, 7);
+
+	END_EXCEPTION_HANDLING(PREDRAW)
 }
 
 void MeteoObject::MouseClick (int x, int y)

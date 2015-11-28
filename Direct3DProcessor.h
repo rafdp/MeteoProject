@@ -109,4 +109,6 @@ public:
 	WindowClass* GetWindowPtr ();
 
 	void AddToDelete (IUnknown* ptr);
+
+	Direct3DTextureManager& GetTextureManager ();
 };

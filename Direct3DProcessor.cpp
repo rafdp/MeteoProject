@@ -246,7 +246,7 @@ void Direct3DProcessor::InitDeviceAndSwapChain ()
 											  nullptr,
 											  &currentBuffer_);
 	if (result != S_OK)
-		_EXC_N (CREATE_RENDER_TARGET,
+		_EXC_N (CREATE_RENDER_TARGET_VIEW,
 				"D3D: Failed to create render target from swap chain buffer (0x%x)" _
 				result);
 
@@ -731,6 +731,11 @@ void Direct3DProcessor::AddToDelete(IUnknown* ptr)
 {
 	if (ptr)
 		toDelete_.push_back(ptr);
+}
+
+Direct3DTextureManager& Direct3DProcessor::GetTextureManager()
+{
+	return textureManager_;
 }
 
 void Direct3DProcessor::EnableObjectSettings (Direct3DObject* obj)

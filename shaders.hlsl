@@ -106,3 +106,8 @@ void GShaderShuttle (point GS_INPUT input[1],
 	OutputStream.Append (output[4]);
 	OutputStream.Append (output[5]);
 }
+
+
+Texture2D	 FrontTexture    : register (t1);
+SamplerState FrontSamplerState : register (s1);
+
