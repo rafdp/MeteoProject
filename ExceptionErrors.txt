@@ -1,11 +1,11 @@
 Exception with error code 15,
 error message: "__cdecl MeteoObject::MeteoObject(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class Direct3DProcessor *,class Direct3DCamera *): Error occurred"
-occurred in file: "c:\users\raffaele\documents\meteoproj\meteoproject\meteoobject.cpp" on line 38
+occurred in file: "c:\users\raffaele\documents\meteoproj\meteoproject\meteoobject.cpp" on line 47
 caused by:
-Exception with error code 15,
-error message: "__cdecl MeteoDataLoader::MeteoDataLoader(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class Direct3DProcessor *): Error occurred"
-occurred in file: "c:\users\raffaele\documents\meteoproj\meteoproject\dataloader.cpp" on line 42
+Exception with error code 124,
+error message: "void __cdecl MeteoObject::Create3dTexture(void): Error occurred"
+occurred in file: "c:\users\raffaele\documents\meteoproj\meteoproject\meteoobject.cpp" on line 621
 caused by:
-Exception with error code 16,
-error message: "Failed to open file "Data/COSMOMESH""
-occurred in file: "c:\users\raffaele\documents\meteoproj\meteoproject\dataloader.cpp" on line 16
+Exception with error code 35,
+error message: "Meteo object: Failed to create render target view (0x80070057)"
+occurred in file: "c:\users\raffaele\documents\meteoproj\meteoproject\meteoobject.cpp" on line 608

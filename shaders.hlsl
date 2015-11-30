@@ -111,3 +111,20 @@ void GShaderShuttle (point GS_INPUT input[1],
 Texture2D	 FrontTexture    : register (t1);
 SamplerState FrontSamplerState : register (s1);
 
+
+struct PS_INPUT_
+{
+	float4 position : SV_POSITION;
+};
+
+PS_INPUT_ VShaderRM(float4 pos : POSITION)
+{
+	PS_INPUT_ out_ = {pos};
+	return out_;
+}
+
+
+float4 PShaderRM(PS_INPUT_ pos) : SV_TARGET
+{
+	return float4 (1.0f, 0.0, 0.5f, 0.1f);
+}

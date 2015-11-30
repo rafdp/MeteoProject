@@ -6,15 +6,18 @@ class MeteoObject : NZA_t
 {
 	MeteoDataLoader dl_;
 	Direct3DObject* object_;
-	Direct3DObject* front_;
+	Direct3DObject* map_;
 	Direct3DObject* shuttle_;
 	bool shuttleSet_;
 	uint8_t currentHour_;
 	ShaderIndex_t vertS_;
+	ShaderIndex_t vertSRM_;
 	ShaderIndex_t pixS_;
+	ShaderIndex_t pixSRM_;
 	ShaderIndex_t geoS_;
 	ShaderIndex_t geoShuttleS_;
 	LayoutIndex_t layout_;
+	LayoutIndex_t layoutRM_;
     TextureIndex_t texture_;
 	SamplerIndex_t sampler_;
 	Direct3DProcessor* proc_;
@@ -34,7 +37,7 @@ class MeteoObject : NZA_t
 	~MeteoObject ();
 	void LoadShadersAndLayout ();
 
-	//void CreateMap ();
+	void CreateMap ();
 	//void CreateFronts ();
 	//void CreateFrontsParticles ();
 
@@ -55,4 +58,6 @@ class MeteoObject : NZA_t
 	void Create3dTexture ();
 
 	void PreDraw ();
+
+	void InitRayMarching ();
 };

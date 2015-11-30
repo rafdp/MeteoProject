@@ -396,11 +396,11 @@ void Direct3DCamera::Update ()
 }
 
 
-const XMMATRIX& Direct3DCamera::GetView ()
+const XMMATRIX& Direct3DCamera::GetView () const
 {
 	return view_;
 }
-const XMMATRIX& Direct3DCamera::GetProjection ()
+const XMMATRIX& Direct3DCamera::GetProjection () const
 {
 	return projection_;
 }
@@ -451,7 +451,7 @@ void Direct3DCamera::RotateVertical (float a)
 	RotateDir (0.0f, -a);
 }
 
-void Direct3DCamera::StorePos (XMFLOAT4& pos)
+void Direct3DCamera::StorePos (XMFLOAT4& pos) const
 {
 	XMStoreFloat4 (&pos, position_);
 }

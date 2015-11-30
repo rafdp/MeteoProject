@@ -24,10 +24,10 @@ public:
 
 	void Update ();
 
-	const XMMATRIX& GetView ();
-	const XMMATRIX& GetProjection ();
+	const XMMATRIX& GetView () const;
+	const XMMATRIX& GetProjection () const;
 
-	void StorePos (XMFLOAT4& pos);
+	void StorePos (XMFLOAT4& pos) const;
 	void SetPos (XMFLOAT4 pos);
 	void SetDir (XMFLOAT4 dir);
 

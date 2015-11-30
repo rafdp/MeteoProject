@@ -12,16 +12,19 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	try :
 	dl_ (cosmomesh, fronts, height, proc),
 	object_      (),
-	front_       (),
+	map_         (),
 	shuttle_     (),
 	shuttleSet_  (),
 	currentHour_ (),
+	vertSRM_     (),
 	vertS_       (),
+	pixSRM_      (),
 	pixS_        (),
 	geoS_        (),
 	geoShuttleS_ (),
 	texture_     (),
 	layout_      (),
+	layoutRM_    (),
 	sampler_     (),
 	proc_        (proc),
 	cam_         (cam),
@@ -35,9 +38,9 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	proc_->GetWindowPtr ()->AddCallback (WM_MOUSEWHEEL,  OnWheel);
 	proc_->GetWindowPtr ()->AddCallback (WM_KEYDOWN,     OnChar);
 	sampler_ = proc_->AddSamplerState(D3D11_TEXTURE_ADDRESS_CLAMP);
-
+	InitRayMarching ();
 	Create3dTexture ();
-	//CreateMap ();
+	CreateMap ();
 	//CreateFrontsParticles ();
 	
 }
@@ -55,7 +58,8 @@ void MeteoObject::ok ()
 MeteoObject::~MeteoObject ()
 {
 	object_ = nullptr;
-	front_ = nullptr;
+	map_ = nullptr;
+	shuttle_ = nullptr;
 	currentHour_ = 0;
 	vertS_ = 0;
 	pixS_ = 0;
@@ -72,9 +76,15 @@ void MeteoObject::LoadShadersAndLayout ()
 	vertS_ = proc_->LoadShader ("shaders.hlsl",
 							   "VShader",
 							   SHADER_VERTEX);
+	vertSRM_ = proc_->LoadShader("shaders.hlsl",
+			   				     "VShaderRM",
+							     SHADER_VERTEX);
 	pixS_ = proc_->LoadShader ("shaders.hlsl",
 							  "PShader",
-							  SHADER_PIXEL);
+							  SHADER_PIXEL); 
+	pixSRM_ = proc_->LoadShader("shaders.hlsl",
+								"PShaderRM",
+								SHADER_PIXEL);
 	geoS_ = proc_->LoadShader ("shaders.hlsl",
 							  "GShader",
 							  SHADER_GEOMETRY);
@@ -84,9 +94,10 @@ void MeteoObject::LoadShadersAndLayout ()
 									  SHADER_GEOMETRY);
 
 	layout_ = proc_->AddLayout (vertS_, true, false, false, true);
+	layoutRM_ = proc_->AddLayout(vertSRM_, true, false, false, false);
 }
 
-/*void MeteoObject::CreateMap ()
+void MeteoObject::CreateMap ()
 {
 	BEGIN_EXCEPTION_HANDLING
 
@@ -95,10 +106,10 @@ void MeteoObject::LoadShadersAndLayout ()
 	Vertex_t currentVertex = {};
 	LoadShadersAndLayout ();
 
-	object_ = new (GetValidObjectPtr ())
+	map_ = new (GetValidObjectPtr ())
 		Direct3DObject (world, false, true, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-	std::vector<Vertex_t>& vertices = object_->GetVertices ();
+	std::vector<Vertex_t>& vertices = map_->GetVertices ();
 	vertices.reserve (DATA_WIDTH * DATA_HEIGHT);
 
 	MeteoData_t& data_ = dl_.data_;
@@ -196,16 +207,16 @@ void MeteoObject::LoadShadersAndLayout ()
 		indices += DATA_HEIGHT * 2 - 2;
 	}
 
-	object_->AddIndexArray (mapping, mapSize);
-	proc_->AttachShaderToObject (object_, vertS_);
-	proc_->AttachShaderToObject (object_, pixS_);
-	proc_->SetLayout (object_, layout_);
-	proc_->RegisterObject (object_);
+	map_->AddIndexArray (mapping, mapSize);
+	proc_->AttachShaderToObject (map_, vertS_);
+	proc_->AttachShaderToObject (map_, pixS_);
+	proc_->SetLayout (map_, layout_);
+	proc_->RegisterObject (map_);
 
 	delete[] mapping;
 
 	END_EXCEPTION_HANDLING (CREATE_OBJECTS)
-}*/
+}
 
 /*void MeteoObject::CreateFronts ()
 {
@@ -496,8 +507,8 @@ void MeteoObject::Rotate ()
 {
 	if (object_)
 		object_->GetWorld () *= XMMatrixRotationY (0.01f);
-	if (front_)
-		front_->GetWorld () *= XMMatrixRotationY (0.01f);
+	//if (front_)
+	//	front_->GetWorld () *= XMMatrixRotationY (0.01f);
 }
 /*
 void MeteoObject::NextHour ()
@@ -576,12 +587,10 @@ void MeteoObject::Create3dTexture()
 	desc.Width = DATA_WIDTH;
 	desc.Height = DATA_HEIGHT;
 	desc.MipLevels = 1;
-	desc.Depth = SLICES;
-	desc.Format = DXGI_FORMAT_R8G8B8A8_UINT;
+	desc.Depth = 7;
+	desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	desc.Usage = D3D11_USAGE_DEFAULT;
-	desc.BindFlags = D3D11_BIND_RENDER_TARGET;
-	desc.CPUAccessFlags = 0;
-	desc.MiscFlags = 0;
+	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 
 
 	D3D11_SUBRESOURCE_DATA initData = {dl_.Offset (0, 0, 0, currentHour_), DATA_WIDTH * sizeof (XMFLOAT4), DATA_WIDTH * DATA_WIDTH * sizeof(XMFLOAT4) };
@@ -591,16 +600,9 @@ void MeteoObject::Create3dTexture()
 	ID3D11Texture3D* tex = nullptr;
 	result = proc_->GetDevice()->CreateTexture3D(&desc, &initData, &tex);
 
-	if (result != S_OK)
+	if (result != S_OK || !tex)
 		_EXC_N (CREATE_3D_TEXTURE_D3D, "Meteo object: Failed to create texture3D (0x%x)" _ result)
-	ID3D11RenderTargetView  *pRTV = nullptr;
-	result = proc_->GetDevice()->CreateRenderTargetView(tex, nullptr, &pRTV);
 
-	if (result != S_OK)
-		_EXC_N(CREATE_RENDER_TARGET_VIEW, "Meteo object: Failed to create render target view (0x%x)" _ result)
-
-	proc_->AddToDelete (tex);
-	proc_->AddToDelete (pRTV);
 
 	ID3D11ShaderResourceView* srv = nullptr;
 
@@ -610,6 +612,9 @@ void MeteoObject::Create3dTexture()
 
 	texture_ = proc_->GetTextureManager().RegisterTexture (srv);
 
+	proc_->AddToDelete(tex);
+	proc_->AddToDelete(srv);
+
 	END_EXCEPTION_HANDLING (CREATE_3D_TEXTURE)
 }
 
@@ -617,10 +622,48 @@ void MeteoObject::PreDraw()
 {
 	BEGIN_EXCEPTION_HANDLING
 
-	proc_->SendTextureToPS (texture_, 7);
-	proc_->SendSamplerStateToPS (sampler_, 7);
+	proc_->SendSamplerStateToPS(sampler_, 1);
+	proc_->SendTextureToPS (texture_, 1);
 
 	END_EXCEPTION_HANDLING(PREDRAW)
+}
+
+void MeteoObject::InitRayMarching ()
+{
+	BEGIN_EXCEPTION_HANDLING
+	XMMATRIX world = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+
+	object_ = new (GetValidObjectPtr())
+		Direct3DObject(world, false, false, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	std::vector<Vertex_t>& vec = object_->GetVertices();
+
+	Vertex_t current = {};
+	current.SetPos(0.5f, -0.5f, 0.0f);
+	vec.push_back(current);
+
+	current.SetPos(0.5f, 0.5f, 0.0f);
+	vec.push_back(current);
+
+	current.SetPos(-0.5f, -0.5f, 0.0f);
+	vec.push_back(current);
+
+	current.SetPos(-0.5f, -0.5f, 0.0f);
+	vec.push_back(current);
+
+	current.SetPos(-0.5f, 0.5f, 0.0f);
+	vec.push_back(current);
+
+	current.SetPos(0.5f, 0.5f, 0.0f);
+	vec.push_back(current);
+
+	LoadShadersAndLayout();
+
+	proc_->AttachShaderToObject(object_, vertSRM_);
+	proc_->AttachShaderToObject(object_, pixSRM_);
+	proc_->SetLayout(object_, layoutRM_);
+	proc_->RegisterObject(object_);
+
+	END_EXCEPTION_HANDLING (INIT_RAY_MARCHING)
 }
 
 void MeteoObject::MouseClick (int x, int y)

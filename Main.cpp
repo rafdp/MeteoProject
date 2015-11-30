@@ -98,6 +98,8 @@ int WINAPI WinMain (HINSTANCE hInstance,
 
 			ProcessCam (&cam);
 
+			meteo.PreDraw ();
+
 			//cam.RotateHorizontal (0.1f);
 			cam.Update ();
 			cam.StorePos (camPos);
@@ -176,7 +178,6 @@ void ProcessCam (Direct3DCamera* cam)
 	{
 		if (cam->GetFOV () > 0.025)
 			cam->GetFOV () -= 0.01;
-		printf ("%f\n", cam->GetFOV ());
 	}
 	if (GetAsyncKeyState (VK_UP))
 	{
