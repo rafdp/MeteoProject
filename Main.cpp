@@ -3,6 +3,13 @@
 
 ExceptionData_t* __EXPN__ = nullptr;
 
+
+struct CamInfo_t
+{
+	XMFLOAT4 pos;
+	XMFLOAT4 dir;
+};
+
 void ProcessCam (Direct3DCamera* cam);
 
 int WINAPI WinMain (HINSTANCE hInstance,
@@ -33,15 +40,17 @@ int WINAPI WinMain (HINSTANCE hInstance,
 
 		
 		//XMMATRIX world = XMMatrixTranslation (0.0f, 0.0f, 0.0f);
-		XMFLOAT4 camPos = { 0.0f, 2.0f, -2.0f, 1.0f };
+		CamInfo_t camInfo = { { 0.0f, 2.0f, -2.0f, 1.0f }};
 		Direct3DCamera cam (&window,
-							camPos.x, camPos.y, camPos.z,
+							camInfo.pos.x, camInfo.pos.y, camInfo.pos.z,
 							0.0f, -1.0f, 1.0f,
 							0.0, 1.0f, 0.0f,
 							FOV, 0.1f);
 
-		ConstantBufferIndex_t camBuf = d3dProc.RegisterConstantBuffer (&camPos,
-																	   sizeof (camPos),
+		XMStoreFloat4(&camInfo.dir, cam.GetDir());
+
+		ConstantBufferIndex_t camBuf = d3dProc.RegisterConstantBuffer (&camInfo,
+																	   sizeof (camInfo),
 																	   1);
 		d3dProc.UpdateConstantBuffer (camBuf);
 
@@ -72,7 +81,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 			}
 			// SCENE PROCESSING
 
-			if (rotate) meteo.Rotate ();
+			if (rotate) meteo.Rotate (0.001f);
 			if (GetAsyncKeyState (VK_SPACE))
 			{
 				if (!wasPressedSpace)
@@ -102,7 +111,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 
 			//cam.RotateHorizontal (0.1f);
 			cam.Update ();
-			cam.StorePos (camPos);
+			cam.StorePos (camInfo.pos);
 			d3dProc.UpdateConstantBuffer (camBuf);
 
 			d3dProc.SendCBToGS (camBuf);

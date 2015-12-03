@@ -32,6 +32,7 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	drawShuttle_ (false)
 {
 	ok ();
+	CreateMap();
 
 	proc_->GetWindowPtr ()->SetCallbackPtr (this);
 	proc_->GetWindowPtr ()->AddCallback (WM_LBUTTONDOWN, OnPoint);
@@ -40,7 +41,6 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	sampler_ = proc_->AddSamplerState(D3D11_TEXTURE_ADDRESS_CLAMP);
 	InitRayMarching ();
 	Create3dTexture ();
-	CreateMap ();
 	//CreateFrontsParticles ();
 	
 }
@@ -94,7 +94,7 @@ void MeteoObject::LoadShadersAndLayout ()
 									  SHADER_GEOMETRY);
 
 	layout_ = proc_->AddLayout (vertS_, true, false, false, true);
-	layoutRM_ = proc_->AddLayout(vertSRM_, true, false, false, false);
+	layoutRM_ = proc_->AddLayout(vertSRM_, true, false, false, true);
 }
 
 void MeteoObject::CreateMap ()
@@ -503,10 +503,10 @@ void MeteoObject::CreateMap ()
 	END_EXCEPTION_HANDLING (BUILD_FRONT)
 }*/
 
-void MeteoObject::Rotate ()
+void MeteoObject::Rotate (float d)
 {
-	if (object_)
-		object_->GetWorld () *= XMMatrixRotationY (0.01f);
+	if (map_)
+		map_->GetWorld () *= XMMatrixRotationY (d);
 	//if (front_)
 	//	front_->GetWorld () *= XMMatrixRotationY (0.01f);
 }
@@ -638,22 +638,22 @@ void MeteoObject::InitRayMarching ()
 	std::vector<Vertex_t>& vec = object_->GetVertices();
 
 	Vertex_t current = {};
-	current.SetPos(0.5f, -0.5f, 0.0f);
+	current.SetPos(1.0f, -1.0f, 0.0f);
 	vec.push_back(current);
 
-	current.SetPos(0.5f, 0.5f, 0.0f);
+	current.SetPos(1.0f, 1.0f, 0.0f);
 	vec.push_back(current);
 
-	current.SetPos(-0.5f, -0.5f, 0.0f);
+	current.SetPos(-1.0f, -1.0f, 0.0f);
 	vec.push_back(current);
 
-	current.SetPos(-0.5f, -0.5f, 0.0f);
+	current.SetPos(-1.0f, -1.0f, 0.0f);
 	vec.push_back(current);
 
-	current.SetPos(-0.5f, 0.5f, 0.0f);
+	current.SetPos(-1.0f, 1.0f, 0.0f);
 	vec.push_back(current);
 
-	current.SetPos(0.5f, 0.5f, 0.0f);
+	current.SetPos(1.0f, 1.0f, 0.0f);
 	vec.push_back(current);
 
 	LoadShadersAndLayout();

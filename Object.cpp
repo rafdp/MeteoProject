@@ -200,6 +200,7 @@ void Direct3DObject::Draw (ID3D11DeviceContext* deviceContext,
 	cbManager_->Update (objectBufferN_, deviceContext);
 	cbManager_->SendVSBuffer (objectBufferN_, deviceContext);
 	cbManager_->SendGSBuffer (objectBufferN_, deviceContext);
+	cbManager_->SendPSBuffer(objectBufferN_, deviceContext);
 
 	deviceContext->IASetPrimitiveTopology (topology_);
 

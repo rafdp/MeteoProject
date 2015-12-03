@@ -8,6 +8,7 @@ cbuffer cbPerObject : register(b0)
 cbuffer Cam : register(b1)
 {
 	float4 CamPos;
+	float4 CamDir;
 }
 
 struct GS_INPUT
@@ -115,16 +116,18 @@ SamplerState FrontSamplerState : register (s1);
 struct PS_INPUT_
 {
 	float4 position : SV_POSITION;
+	float4 pos : TEXCOORD0;
 };
 
-PS_INPUT_ VShaderRM(float4 pos : POSITION)
+PS_INPUT_ VShaderRM(float4 pos : POSITION, float4 color : COLOR)
 {
-	PS_INPUT_ out_ = {pos};
+	PS_INPUT_ out_ = {pos, pos};
 	return out_;
 }
 
 
 float4 PShaderRM(PS_INPUT_ pos) : SV_TARGET
 {
-	return float4 (1.0f, 0.0, 0.5f, 0.1f);
+
+	return float4 (pos.pos.x/2.0+0.5f, pos.pos.y / 2.0 + 0.5f, 0.0f, 0.5f);
 }

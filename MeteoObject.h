@@ -41,7 +41,7 @@ class MeteoObject : NZA_t
 	//void CreateFronts ();
 	//void CreateFrontsParticles ();
 
-	void Rotate ();
+	void Rotate (float d = 0.01f);
 
 	//void NextHour ();
 
