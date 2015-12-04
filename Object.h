@@ -80,8 +80,10 @@ struct Vertex_t
 };
 struct Direct3DObjectBuffer
 {
-	XMMATRIX WVP;
 	XMMATRIX World;
+	XMMATRIX View;
+	XMMATRIX Projection;
+	XMMATRIX InverseView;
 };
 
 __declspec (align (16))
@@ -142,7 +144,7 @@ public:
 
 	void SetupBuffers (ID3D11Device* device);
 
-	void SetWVP (XMMATRIX& matrix);
+	//void SetWVP (XMMATRIX& matrix);
 	void SetWorld (XMMATRIX& matrix);
 	XMMATRIX& GetWorld ();
 

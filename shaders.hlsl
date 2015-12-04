@@ -1,8 +1,11 @@
 
 cbuffer cbPerObject : register(b0)
 {
-	float4x4 VP;
 	float4x4 World;
+	float4x4 View;
+	float4x4 Projection;
+
+	float4x4 InverseView;
 };
 
 cbuffer Cam : register(b1)
@@ -29,7 +32,8 @@ GS_INPUT VShader (float4 inPos : POSITION, float4 inColor : COLOR)
 {
 	GS_INPUT output;
 	output.worldPos = mul (inPos, World);
-	output.position = mul (output.worldPos, VP);
+	output.position = mul (output.worldPos, View);
+	output.position = mul (output.position, Projection);
 	output.color = inColor;
 	return output;
 }
@@ -56,6 +60,8 @@ void GShader (point GS_INPUT input[1],
 	float3 rightAxis = normalize (cross (normal, upAxis));
 
 	float d = 0.001f;
+
+	float4x4 VP = View*Projection;
 
 	for (int i = 0; i < 6; i++)
 		output[i].color = input[0].color;
@@ -88,6 +94,7 @@ void GShaderShuttle (point GS_INPUT input[1],
 	float3 rightAxis = normalize (cross (normal, upAxis));
 
 	float d = 0.0015;
+	float4x4 VP = View*Projection;
 
 	for (int i = 0; i < 6; i++)
 		output[i].color = input[0].color;
@@ -128,6 +135,18 @@ PS_INPUT_ VShaderRM(float4 pos : POSITION, float4 color : COLOR)
 
 float4 PShaderRM(PS_INPUT_ pos) : SV_TARGET
 {
+	float4 near = {pos.pos.x / Projection[0][0],
+				   pos.pos.y / Projection[1][1],
+				   0.0f, 1.0f};
+	float4 far = { pos.pos.x / Projection[0][0],
+				   pos.pos.y / Projection[1][1],
+				   1.0f, 1.0f };
 
-	return float4 (pos.pos.x/2.0+0.5f, pos.pos.y / 2.0 + 0.5f, 0.0f, 0.5f);
+	near = mul(near, InverseView);
+	far  = mul(far,  InverseView);
+
+	float4 dir = normalize (far - near);
+
+
+	return float4 (cos (3.14/2.0f*pos.pos.x), sin(3.14 / 2.0f*pos.pos.y), 0.0f, 0.5f);
 }

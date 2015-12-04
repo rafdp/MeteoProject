@@ -144,11 +144,11 @@ void Direct3DObject::SetupBuffers (ID3D11Device* device)
 
 	END_EXCEPTION_HANDLING (SETUP_BUFFERS)
 }
-
+/*
 void Direct3DObject::SetWVP (XMMATRIX& matrix)
 {
 	currM_.objData_.WVP = matrix;
-}
+}*/
 
 void Direct3DObject::SetWorld (XMMATRIX& matrix)
 {
@@ -190,17 +190,20 @@ void Direct3DObject::Draw (ID3D11DeviceContext* deviceContext,
 					"D3D: Unable to draw object with empty index buffer (obj %d)" _
 					objectId_)
 			deviceContext->IASetIndexBuffer (indexBuffer_, DXGI_FORMAT_R32_UINT, 0);
-	}
-	XMMATRIX tempWVP = /*currM_.world_ **/ cam->GetView () * cam->GetProjection ();
-	currM_.objData_.WVP = XMMatrixTranspose (tempWVP);
-	currM_.objData_.World = XMMatrixTranspose (currM_.world_);
+	} 
 
+
+	XMVECTOR temp;
+	currM_.objData_.World       = XMMatrixTranspose (currM_.world_);
+	currM_.objData_.View        = XMMatrixTranspose (cam->GetView());
+	currM_.objData_.Projection  = XMMatrixTranspose (cam->GetProjection());
+	currM_.objData_.InverseView = XMMatrixTranspose (XMMatrixInverse (&temp, cam->GetProjection()));
 
 	
 	cbManager_->Update (objectBufferN_, deviceContext);
 	cbManager_->SendVSBuffer (objectBufferN_, deviceContext);
 	cbManager_->SendGSBuffer (objectBufferN_, deviceContext);
-	cbManager_->SendPSBuffer(objectBufferN_, deviceContext);
+	cbManager_->SendPSBuffer (objectBufferN_, deviceContext);
 
 	deviceContext->IASetPrimitiveTopology (topology_);
 

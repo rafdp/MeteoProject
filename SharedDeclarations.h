@@ -162,4 +162,8 @@ const float REGION_X = 2.0f;
 const float REGION_Y = 1.0f;
 const float REGION_Z = 0.5f;
 
+const float BASE_X = 0.0f;
+const float BASE_Y = 2.0f;
+const float BASE_Z = -2.0f;
+
 #undef E

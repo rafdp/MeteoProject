@@ -40,7 +40,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 
 		
 		//XMMATRIX world = XMMatrixTranslation (0.0f, 0.0f, 0.0f);
-		CamInfo_t camInfo = { { 0.0f, 2.0f, -2.0f, 1.0f }};
+		CamInfo_t camInfo = { { BASE_X, BASE_Y, BASE_Z, 1.0f }};
 		Direct3DCamera cam (&window,
 							camInfo.pos.x, camInfo.pos.y, camInfo.pos.z,
 							0.0f, -1.0f, 1.0f,
@@ -175,8 +175,8 @@ void ProcessCam (Direct3DCamera* cam)
 	}
 	if (GetAsyncKeyState ('N'))
 	{
-		cam->SetPos ({0.0f, 4.0f, -4.0f, 1.0f});
-		cam->SetDir ({ 0.0f, -4.0f, 4.0f, 1.0f});
+		cam->SetPos ({ BASE_X,  BASE_Y,  BASE_Z, 1.0f});
+		cam->SetDir ({-BASE_X, -BASE_Y, -BASE_Z, 1.0f});
 	}
 	if (GetAsyncKeyState ('M'))
 	{
