@@ -20,6 +20,7 @@ class MeteoObject : NZA_t
 	LayoutIndex_t layoutRM_;
     TextureIndex_t texture_;
 	SamplerIndex_t sampler_;
+	ConstantBufferIndex_t cb_;
 	Direct3DProcessor* proc_;
 	Direct3DCamera* cam_;
 	Direct3DCamera bak_;

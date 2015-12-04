@@ -65,7 +65,6 @@ int WINAPI WinMain (HINSTANCE hInstance,
 		MSG msg = {};
 		bool rotate = true;
 		bool wasPressedSpace = false;
-		bool wasPressedN = false;
 		
 		printf ("18.9.15 00:00\r");
 

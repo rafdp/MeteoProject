@@ -132,6 +132,11 @@ PS_INPUT_ VShaderRM(float4 pos : POSITION, float4 color : COLOR)
 	return out_;
 }
 
+cbuffer Fronts : register(b2)
+{
+	float4x4 InverseWorld;
+}
+
 
 float4 PShaderRM(PS_INPUT_ pos) : SV_TARGET
 {
@@ -143,9 +148,22 @@ float4 PShaderRM(PS_INPUT_ pos) : SV_TARGET
 				   1.0f, 1.0f };
 
 	near = mul(near, InverseView);
+	near = mul(near, InverseWorld);
 	far  = mul(far,  InverseView);
+	far  = mul(far,  InverseWorld);
 
 	float4 dir = normalize (far - near);
+
+	const int minPoints = 16;
+
+	float4 d = (far - near) / minPoints;
+
+	for (int i = 0; i < minPoints; i++)
+	{
+		if 
+	}
+
+
 
 
 	return float4 (cos (3.14/2.0f*pos.pos.x), sin(3.14 / 2.0f*pos.pos.y), 0.0f, 0.5f);

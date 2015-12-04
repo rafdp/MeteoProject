@@ -26,6 +26,7 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	layout_      (),
 	layoutRM_    (),
 	sampler_     (),
+	cb_          (),
 	proc_        (proc),
 	cam_         (cam),
 	bak_         (*cam),
@@ -41,6 +42,7 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	sampler_ = proc_->AddSamplerState(D3D11_TEXTURE_ADDRESS_CLAMP);
 	InitRayMarching ();
 	Create3dTexture ();
+	cb_ = proc_->RegisterConstantBuffer (&object_->GetWorld(), sizeof(XMMATRIX), 2);
 	//CreateFrontsParticles ();
 	
 }
@@ -622,6 +624,7 @@ void MeteoObject::PreDraw()
 {
 	BEGIN_EXCEPTION_HANDLING
 
+	proc_->UpdateConstantBuffer(cb_);
 	proc_->SendSamplerStateToPS(sampler_, 1);
 	proc_->SendTextureToPS (texture_, 1);
 
