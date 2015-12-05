@@ -2,6 +2,12 @@
 
 #include "includes.h"
 
+struct MeteoObjectShaderData_t
+{
+	XMMATRIX inverseWorld_;
+	XMVECTOR size_;
+};
+
 class MeteoObject : NZA_t
 {
 	MeteoDataLoader dl_;
@@ -21,6 +27,7 @@ class MeteoObject : NZA_t
     TextureIndex_t texture_;
 	SamplerIndex_t sampler_;
 	ConstantBufferIndex_t cb_;
+	MeteoObjectShaderData_t* meteoData_;
 	Direct3DProcessor* proc_;
 	Direct3DCamera* cam_;
 	Direct3DCamera bak_;

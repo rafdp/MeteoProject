@@ -27,6 +27,7 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	layoutRM_    (),
 	sampler_     (),
 	cb_          (),
+	meteoData_	 (reinterpret_cast<MeteoObjectShaderData_t*>(_aligned_malloc(sizeof(MeteoObjectShaderData_t), 16))),
 	proc_        (proc),
 	cam_         (cam),
 	bak_         (*cam),
@@ -35,6 +36,8 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	ok ();
 	CreateMap();
 
+	meteoData_->size_ = XMVectorSet(REGION_X, REGION_Y, REGION_Z, 0.0f);
+
 	proc_->GetWindowPtr ()->SetCallbackPtr (this);
 	proc_->GetWindowPtr ()->AddCallback (WM_LBUTTONDOWN, OnPoint);
 	proc_->GetWindowPtr ()->AddCallback (WM_MOUSEWHEEL,  OnWheel);
@@ -42,7 +45,9 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	sampler_ = proc_->AddSamplerState(D3D11_TEXTURE_ADDRESS_CLAMP);
 	InitRayMarching ();
 	Create3dTexture ();
-	cb_ = proc_->RegisterConstantBuffer (&object_->GetWorld(), sizeof(XMMATRIX), 2);
+	cb_ = proc_->RegisterConstantBuffer (meteoData_, sizeof(MeteoObjectShaderData_t), 2);
+	
+	proc_->UpdateConstantBuffer(cb_);
 	//CreateFrontsParticles ();
 	
 }
@@ -67,6 +72,7 @@ MeteoObject::~MeteoObject ()
 	pixS_ = 0;
 	geoS_ = -1;
 	layout_ = -1;
+	_aligned_free(meteoData_);
 }
 
 void MeteoObject::LoadShadersAndLayout ()
@@ -509,8 +515,8 @@ void MeteoObject::Rotate (float d)
 {
 	if (map_)
 		map_->GetWorld () *= XMMatrixRotationY (d);
-	//if (front_)
-	//	front_->GetWorld () *= XMMatrixRotationY (0.01f);
+	if (object_)
+		object_->GetWorld () *= XMMatrixRotationY (d);
 }
 /*
 void MeteoObject::NextHour ()
@@ -624,7 +630,12 @@ void MeteoObject::PreDraw()
 {
 	BEGIN_EXCEPTION_HANDLING
 
+	XMVECTOR temp;
+
+	meteoData_->inverseWorld_ = XMMatrixInverse(&temp, object_->GetWorld ());
+
 	proc_->UpdateConstantBuffer(cb_);
+	proc_->SendCBToPS(cb_);
 	proc_->SendSamplerStateToPS(sampler_, 1);
 	proc_->SendTextureToPS (texture_, 1);
 

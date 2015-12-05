@@ -84,6 +84,7 @@ struct Direct3DObjectBuffer
 	XMMATRIX View;
 	XMMATRIX Projection;
 	XMMATRIX InverseView;
+	XMMATRIX InverseProjection;
 };
 
 __declspec (align (16))

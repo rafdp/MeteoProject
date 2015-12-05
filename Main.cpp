@@ -80,7 +80,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 			}
 			// SCENE PROCESSING
 
-			if (rotate) meteo.Rotate (0.001f);
+			if (rotate) meteo.Rotate (0.01f);
 			if (GetAsyncKeyState (VK_SPACE))
 			{
 				if (!wasPressedSpace)
@@ -113,7 +113,8 @@ int WINAPI WinMain (HINSTANCE hInstance,
 			cam.StorePos (camInfo.pos);
 			d3dProc.UpdateConstantBuffer (camBuf);
 
-			d3dProc.SendCBToGS (camBuf);
+			d3dProc.SendCBToGS(camBuf);
+			d3dProc.SendCBToPS (camBuf);
 			d3dProc.ProcessDrawing (&cam, true);
 			d3dProc.Present ();
 

@@ -197,7 +197,8 @@ void Direct3DObject::Draw (ID3D11DeviceContext* deviceContext,
 	currM_.objData_.World       = XMMatrixTranspose (currM_.world_);
 	currM_.objData_.View        = XMMatrixTranspose (cam->GetView());
 	currM_.objData_.Projection  = XMMatrixTranspose (cam->GetProjection());
-	currM_.objData_.InverseView = XMMatrixTranspose (XMMatrixInverse (&temp, cam->GetProjection()));
+	currM_.objData_.InverseView = XMMatrixTranspose (XMMatrixInverse (&temp, cam->GetView ()));
+	currM_.objData_.InverseProjection = XMMatrixTranspose (XMMatrixInverse(&temp, cam->GetProjection ()));
 
 	
 	cbManager_->Update (objectBufferN_, deviceContext);

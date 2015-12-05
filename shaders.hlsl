@@ -6,6 +6,7 @@ cbuffer cbPerObject : register(b0)
 	float4x4 Projection;
 
 	float4x4 InverseView;
+	float4x4 InverseProjection;
 };
 
 cbuffer Cam : register(b1)
@@ -116,7 +117,7 @@ void GShaderShuttle (point GS_INPUT input[1],
 }
 
 
-Texture2D	 FrontTexture    : register (t1);
+Texture3D	 FrontTexture      : register (t1);
 SamplerState FrontSamplerState : register (s1);
 
 
@@ -135,36 +136,71 @@ PS_INPUT_ VShaderRM(float4 pos : POSITION, float4 color : COLOR)
 cbuffer Fronts : register(b2)
 {
 	float4x4 InverseWorld;
+	float4 Size;
 }
 
+float LengthSqr(float4 pt)
+{
+	return dot (pt.xyz, pt.xyz);
+}
+
+float4 Transform(float4 pt)
+{
+	float4 result = mul(pt, InverseProjection);
+	result = mul(result, InverseView);
+	result = mul(result, InverseWorld);
+	result /= result.w;
+
+	return result;
+
+}
 
 float4 PShaderRM(PS_INPUT_ pos) : SV_TARGET
 {
-	float4 near = {pos.pos.x / Projection[0][0],
-				   pos.pos.y / Projection[1][1],
+	float4 near = {pos.pos.x,
+				   pos.pos.y,
 				   0.0f, 1.0f};
-	float4 far = { pos.pos.x / Projection[0][0],
-				   pos.pos.y / Projection[1][1],
+	float4 far = { pos.pos.x,
+				   pos.pos.y,
 				   1.0f, 1.0f };
 
-	near = mul(near, InverseView);
-	near = mul(near, InverseWorld);
-	far  = mul(far,  InverseView);
-	far  = mul(far,  InverseWorld);
+	near = Transform(near);
+	far  = Transform(far);
 
-	float4 dir = normalize (far - near);
+	float4 dir = normalize(far - near);
 
-	const int minPoints = 16;
+	float b = 2.0f * dot(near, dir);
+	float c = 4.0f * LengthSqr(near) - LengthSqr(Size);
 
-	float4 d = (far - near) / minPoints;
+	float D = (b*b - c);
 
-	for (int i = 0; i < minPoints; i++)
+	clip (D);
+	float sqrtDforth = sqrt(D);
+
+	float t = 2.0f*(-b - sqrtDforth);
+	float shift = 0.0f;
+
+	float3 current = near.xyz + t*dir.xyz;
+	near += t*dir;
+
+	float4 color = {0.0f, 0.0f, 0.0f, 0.0f};
+	float4 newColor = color;
+	
+	float iterations = 4.0f*sqrtDforth / 0.1f;
+
+	float coeffSource = 9.0f;
+	float coeffNew = 1.0f;
+
+	coeffSource /= coeffSource + coeffNew;
+	coeffNew    /= coeffSource + coeffNew;
+	float i = 0;
+	while (i < iterations)
 	{
-		if 
+		//newColor = FrontTexture.Sample(FrontSamplerState, float3 (0.0f, 0.0f, 0.0f));
+		//color = color*coeffSource + newColor*coeffNew;
+		current += dir*0.1f;
+		i += 1.0f;
 	}
-
-
-
-
-	return float4 (cos (3.14/2.0f*pos.pos.x), sin(3.14 / 2.0f*pos.pos.y), 0.0f, 0.5f);
+	color = float4(iterations / (50*length(Size)), 0.3f, 0.4f, 0.5f);
+	return color;
 }
