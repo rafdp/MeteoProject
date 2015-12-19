@@ -59,11 +59,15 @@ void MeteoDataLoader::Float2Color() const
 				for (int y = 0; y < DATA_HEIGHT; y++)
 				{
 					color = data_.front(x, y, slice, hour) / 12.0f;
+					//if (color - 0.5f) _MessageBox ("%d %d %d %f", x, y, slice, color);
 					if (color > 1.0f) color = 1.0f;
 					frontColors_[hour * (SLICES * DATA_HEIGHT * DATA_WIDTH) +
 						slice * (DATA_HEIGHT * DATA_WIDTH) +
 						y * DATA_WIDTH +
-						x] = { 1.0f, color, color, sin(color * XM_PI / 2.0f) };
+						x] = { 0.0f, 
+								color > 0.3f ? 1.0f : 0.0f , 
+								color > 0.3f ? 1.0f : 0.0f , 
+								color > 0.3f ? 1.0f : 0.0f };
 				}
 			}
 		}

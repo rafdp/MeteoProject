@@ -42,13 +42,12 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	proc_->GetWindowPtr ()->AddCallback (WM_LBUTTONDOWN, OnPoint);
 	proc_->GetWindowPtr ()->AddCallback (WM_MOUSEWHEEL,  OnWheel);
 	proc_->GetWindowPtr ()->AddCallback (WM_KEYDOWN,     OnChar);
-	sampler_ = proc_->AddSamplerState(D3D11_TEXTURE_ADDRESS_CLAMP);
+	sampler_ = proc_->AddSamplerState(D3D11_TEXTURE_ADDRESS_BORDER, {0.0f, 0.0f, 0.0f, 0.0f});
+	Create3dTexture();
 	InitRayMarching ();
-	Create3dTexture ();
 	cb_ = proc_->RegisterConstantBuffer (meteoData_, sizeof(MeteoObjectShaderData_t), 2);
 	
 	proc_->UpdateConstantBuffer(cb_);
-	//CreateFrontsParticles ();
 	
 }
 _END_EXCEPTION_HANDLING (CTOR)
@@ -601,7 +600,7 @@ void MeteoObject::Create3dTexture()
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 
 
-	D3D11_SUBRESOURCE_DATA initData = {dl_.Offset (0, 0, 0, currentHour_), DATA_WIDTH * sizeof (XMFLOAT4), DATA_WIDTH * DATA_WIDTH * sizeof(XMFLOAT4) };
+	D3D11_SUBRESOURCE_DATA initData = {dl_.Offset (0, 0, 0, currentHour_), DATA_WIDTH * sizeof (XMFLOAT4), DATA_HEIGHT * DATA_WIDTH * sizeof(XMFLOAT4) };
 	
 	HRESULT result = S_OK;
 
@@ -632,12 +631,12 @@ void MeteoObject::PreDraw()
 
 	XMVECTOR temp;
 
-	meteoData_->inverseWorld_ = XMMatrixInverse(&temp, object_->GetWorld ());
+	meteoData_->inverseWorld_ = object_->GetWorld ();
 
 	proc_->UpdateConstantBuffer(cb_);
 	proc_->SendCBToPS(cb_);
-	proc_->SendSamplerStateToPS(sampler_, 1);
-	proc_->SendTextureToPS (texture_, 1);
+	proc_->SendSamplerStateToPS(sampler_, 2);
+	proc_->SendTextureToPS (texture_, 2);
 
 	END_EXCEPTION_HANDLING(PREDRAW)
 }

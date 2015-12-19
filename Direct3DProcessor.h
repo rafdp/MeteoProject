@@ -63,7 +63,8 @@ public:
 	BlendIndex_t AddBlendState (bool blend = false);
 	void ApplyBlendState (BlendIndex_t n);
 
-	SamplerIndex_t AddSamplerState (D3D11_TEXTURE_ADDRESS_MODE mode = D3D11_TEXTURE_ADDRESS_WRAP);
+	SamplerIndex_t AddSamplerState (D3D11_TEXTURE_ADDRESS_MODE mode = D3D11_TEXTURE_ADDRESS_WRAP, 
+								XMFLOAT4 border = {1.0f, 1.0f, 1.0f, 1.0f});
 	void SendSamplerStateToPS (SamplerIndex_t n, UINT slot);
 
 	void RegisterObject (Direct3DObject* obj);

@@ -117,8 +117,8 @@ void GShaderShuttle (point GS_INPUT input[1],
 }
 
 
-Texture3D	 FrontTexture      : register (t1);
-SamplerState FrontSamplerState : register (s1);
+SamplerState FrontSamplerState : register (s2);
+Texture3D	 FrontTexture      : register (t2);
 
 
 struct PS_INPUT_
@@ -144,6 +144,10 @@ float LengthSqr(float4 pt)
 	return dot (pt.xyz, pt.xyz);
 }
 
+float LengthSqr3(float3 pt)
+{
+	return dot(pt, pt);
+}
 float4 Transform(float4 pt)
 {
 	float4 result = mul(pt, InverseProjection);
@@ -155,8 +159,17 @@ float4 Transform(float4 pt)
 
 }
 
+float4 SampleTexture(float3 pos)
+{
+	return  FrontTexture.Sample(FrontSamplerState, pos);
+}
+
+
+
 float4 PShaderRM(PS_INPUT_ pos) : SV_TARGET
 {
+	const float step = 0.01f;
+
 	float4 near = {pos.pos.x,
 				   pos.pos.y,
 				   0.0f, 1.0f};
@@ -169,38 +182,45 @@ float4 PShaderRM(PS_INPUT_ pos) : SV_TARGET
 
 	float4 dir = normalize(far - near);
 
-	float b = 2.0f * dot(near, dir);
-	float c = 4.0f * LengthSqr(near) - LengthSqr(Size);
+	float b = dot(near, dir);
+	float c = LengthSqr(near) - LengthSqr(Size)/3.0f;
 
 	float D = (b*b - c);
-
+	
 	clip (D);
-	float sqrtDforth = sqrt(D);
+	float sqrtD = sqrt(D);
 
-	float t = 2.0f*(-b - sqrtDforth);
+	float t = -b - sqrtD;
 	float shift = 0.0f;
 
 	float3 current = near.xyz + t*dir.xyz;
-	near += t*dir;
+	//near += t*dir;
+
 
 	float4 color = {0.0f, 0.0f, 0.0f, 0.0f};
 	float4 newColor = color;
 	
-	float iterations = 4.0f*sqrtDforth / 0.1f;
+	const int iterations = (2.0f*sqrtD) / step;
+	float coeffSource = 0.6f;
+	float coeffNew = 0.2f;
 
-	float coeffSource = 9.0f;
-	float coeffNew = 1.0f;
 
-	coeffSource /= coeffSource + coeffNew;
-	coeffNew    /= coeffSource + coeffNew;
-	float i = 0;
-	while (i < iterations)
+
+	[loop] for (int i = 0; i < iterations; i++)
 	{
-		//newColor = FrontTexture.Sample(FrontSamplerState, float3 (0.0f, 0.0f, 0.0f));
+		//color = SampleTexture(float3 (0.3f, 0.2f, 0.4f));
+		
+		newColor = FrontTexture.SampleLevel(FrontSamplerState, 
+											float3 (current.x / Size.x + 0.5f, 
+													current.z / Size.y + 0.5f,
+													current.y / Size.z + 0.5f), 0);
+		//newColor.a = 0.4f;
 		//color = color*coeffSource + newColor*coeffNew;
-		current += dir*0.1f;
-		i += 1.0f;
+		color += newColor*coeffNew;
+		//color = float4 (2.0f*current.x / Size.x, 2.0f*current.x / Size.x, 2.0f*current.x / Size.x, 0.7f);
+		current += dir*step;
 	}
-	color = float4(iterations / (50*length(Size)), 0.3f, 0.4f, 0.5f);
+	//color = SampleTexture(float3 (0.0f, 0.0f, 0.0f));
+	//color = float4(iterations / (50 * length(Size)), 0.3f, 0.4f, 0.5f);
 	return color;
 }

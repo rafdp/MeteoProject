@@ -411,7 +411,7 @@ void Direct3DProcessor::ApplyBlendState (BlendIndex_t n)
 	END_EXCEPTION_HANDLING (APPLY_BLEND_STATE)
 }
 
-SamplerIndex_t Direct3DProcessor::AddSamplerState (D3D11_TEXTURE_ADDRESS_MODE mode)
+SamplerIndex_t Direct3DProcessor::AddSamplerState (D3D11_TEXTURE_ADDRESS_MODE mode, XMFLOAT4 border)
 {
 	BEGIN_EXCEPTION_HANDLING
 
@@ -422,6 +422,10 @@ SamplerIndex_t Direct3DProcessor::AddSamplerState (D3D11_TEXTURE_ADDRESS_MODE mo
 	samplerDesc.AddressV = mode;
 	samplerDesc.AddressW = mode;
 	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	samplerDesc.BorderColor[0] = border.x;
+	samplerDesc.BorderColor[1] = border.y;
+	samplerDesc.BorderColor[2] = border.z;
+	samplerDesc.BorderColor[3] = border.w;
 	samplerDesc.MinLOD = 0;
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
