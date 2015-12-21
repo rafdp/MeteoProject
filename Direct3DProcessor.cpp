@@ -45,7 +45,7 @@ try :
 	InitViewport ();
 	InitDepthStencilView ();
 	ApplyDepthStencilState (AddDepthStencilState ());
-	ApplyRasterizerState   (AddRasterizerState   (true, false, true));
+	ApplyRasterizerState   (AddRasterizerState   (true, false, false));
 	AddRasterizerState   (false);
 	ApplyBlendState (AddBlendState ());
 

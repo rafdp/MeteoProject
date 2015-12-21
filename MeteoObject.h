@@ -20,7 +20,6 @@ class MeteoObject : NZA_t
 	ShaderIndex_t vertSRM_;
 	ShaderIndex_t pixS_;
 	ShaderIndex_t pixSRM_;
-	ShaderIndex_t geoS_;
 	ShaderIndex_t geoShuttleS_;
 	LayoutIndex_t layout_;
 	LayoutIndex_t layoutRM_;

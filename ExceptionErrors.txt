@@ -1,15 +1,15 @@
 Exception with error code 15,
-error message: "__thiscall MeteoObject::MeteoObject(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class Direct3DProcessor *,class Direct3DCamera *): Error occurred"
-occurred in file: "\psf\home\documents\meteoprojectgit\meteoproject\meteoobject.cpp" on line 54
+error message: "__cdecl MeteoObject::MeteoObject(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class Direct3DProcessor *,class Direct3DCamera *): Error occurred"
+occurred in file: "c:\users\raffaele\documents\meteoproj\meteoproject\meteoobject.cpp" on line 52
 caused by:
 Exception with error code 116,
-error message: "void __thiscall MeteoObject::CreateMap(void): Error occurred"
-occurred in file: "\psf\home\documents\meteoprojectgit\meteoproject\meteoobject.cpp" on line 226
+error message: "void __cdecl MeteoObject::CreateMap(void): Error occurred"
+occurred in file: "c:\users\raffaele\documents\meteoproj\meteoproject\meteoobject.cpp" on line 220
 caused by:
 Exception with error code 64,
-error message: "unsigned __int64 __thiscall Direct3DShaderManager::LoadShader(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,enum SHADER_TYPES,struct ID3D11Device *): Error occurred"
-occurred in file: "\psf\home\documents\meteoprojectgit\meteoproject\shadermanager.cpp" on line 217
+error message: "unsigned __int64 __cdecl Direct3DShaderManager::LoadShader(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,enum SHADER_TYPES,struct ID3D11Device *): Error occurred"
+occurred in file: "c:\users\raffaele\documents\meteoproj\meteoproject\shadermanager.cpp" on line 217
 caused by:
 Exception with error code 65,
-error message: "D3D: Failed to load pixel shader (PShaderRM) from file (shaders.hlsl) (0x80004005)"
-occurred in file: "\psf\home\documents\meteoprojectgit\meteoproject\shadermanager.cpp" on line 186
+error message: "D3D: Failed to load geometry shader (GShaderShuttle) from file (shaders.hlsl) (0x80004005)"
+occurred in file: "c:\users\raffaele\documents\meteoproj\meteoproject\shadermanager.cpp" on line 186

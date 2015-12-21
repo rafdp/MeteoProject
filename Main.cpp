@@ -26,19 +26,14 @@ int WINAPI WinMain (HINSTANCE hInstance,
 	{
 		WindowClass window (int (SCREEN_WIDTH * 0.98f), int (SCREEN_HEIGHT * 0.9f));
 		AllocConsole ();
-
-		
-		
-
 		FILE* file = nullptr;
 		freopen_s (&file, "CONOUT$", "w", stdout);
 
 		Direct3DProcessor d3dProc (&window);
 		d3dProc.ApplyBlendState (d3dProc.AddBlendState (true));
 
-		d3dProc.ApplyRasterizerState (d3dProc.AddRasterizerState (false, false, true));
+		//d3dProc.ApplyRasterizerState (d3dProc.AddRasterizerState (false, false, true));
 
-		
 		//XMMATRIX world = XMMatrixTranslation (0.0f, 0.0f, 0.0f);
 		CamInfo_t camInfo = { { BASE_X, BASE_Y, BASE_Z, 1.0f }};
 		Direct3DCamera cam (&window,
@@ -145,7 +140,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 void ProcessCam (Direct3DCamera* cam)
 {
 	float k = 0.5f;
-	if (GetAsyncKeyState (VK_LSHIFT)) k *= 2;
+	if (GetAsyncKeyState (VK_LSHIFT)) k *= 5;
 
 	if (GetAsyncKeyState ('E'))
 	{

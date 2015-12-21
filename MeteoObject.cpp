@@ -20,7 +20,6 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	vertS_       (),
 	pixSRM_      (),
 	pixS_        (),
-	geoS_        (),
 	geoShuttleS_ (),
 	texture_     (),
 	layout_      (),
@@ -67,9 +66,8 @@ MeteoObject::~MeteoObject ()
 	map_ = nullptr;
 	shuttle_ = nullptr;
 	currentHour_ = 0;
-	vertS_ = 0;
-	pixS_ = 0;
-	geoS_ = -1;
+	vertS_ = -1;
+	pixS_ = -1;
 	layout_ = -1;
 	_aligned_free(meteoData_);
 }
@@ -87,14 +85,11 @@ void MeteoObject::LoadShadersAndLayout ()
 			   				     "VShaderRM",
 							     SHADER_VERTEX);
 	pixS_ = proc_->LoadShader ("shaders.hlsl",
-							  "PShader",
+							  "PShaderRM_Map",
 							  SHADER_PIXEL); 
 	pixSRM_ = proc_->LoadShader("shaders.hlsl",
 								"PShaderRM",
 								SHADER_PIXEL);
-	geoS_ = proc_->LoadShader ("shaders.hlsl",
-							  "GShader",
-							  SHADER_GEOMETRY);
 
 	geoShuttleS_ = proc_->LoadShader ("shaders.hlsl",
 									  "GShaderShuttle",
@@ -114,7 +109,7 @@ void MeteoObject::CreateMap ()
 	LoadShadersAndLayout ();
 
 	map_ = new (GetValidObjectPtr ())
-		Direct3DObject (world, false, true, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+		Direct3DObject (world, true, true, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
 	std::vector<Vertex_t>& vertices = map_->GetVertices ();
 	vertices.reserve (DATA_WIDTH * DATA_HEIGHT);
@@ -182,7 +177,7 @@ void MeteoObject::CreateMap ()
 			currentVertex = {};
 			float h = data_.ground (x, y);
 			currentVertex.SetPos (-REGION_X / 2.0f + REGION_X / (xD)* currX,
-								  -(REGION_Z / 2.0f) + REGION_Z / hD * h,
+								  -(REGION_Z / 2.0f)/* + REGION_Z / hD * h*/,
 								  -REGION_Y / 2.0f + REGION_Y / (yD)* currY);
 			float k = 0.5f * h / hD + 0.5f;
 		
@@ -647,27 +642,29 @@ void MeteoObject::InitRayMarching ()
 	XMMATRIX world = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 
 	object_ = new (GetValidObjectPtr())
-		Direct3DObject(world, false, false, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		Direct3DObject(world, false, true, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	std::vector<Vertex_t>& vec = object_->GetVertices();
 
 	Vertex_t current = {};
-	current.SetPos(1.0f, -1.0f, 0.0f);
-	vec.push_back(current);
 
-	current.SetPos(1.0f, 1.0f, 0.0f);
-	vec.push_back(current);
+	for (int i = 0; i < 8; i++)
+	{
+		current.SetPos((i & 0b100 ? (-1.0f) : (1.0f)) * REGION_X / 2.0 - 0.005f, 
+					   (i & 0b010 ? (-1.0f) : (1.0f)) * REGION_Z / 2.0 - 0.005f, 
+					   (i & 0b001 ? (-1.0f) : (1.0f)) * REGION_Y / 2.0 - 0.005f);
+		vec.push_back(current);
+	}
 
-	current.SetPos(-1.0f, -1.0f, 0.0f);
-	vec.push_back(current);
+	UINT indices[36] = { 0, 4, 5, 0, 5, 1,
+						 0, 1, 2, 2, 1, 3,
+						 6, 5, 4, 6, 7, 5,
+						 6, 4, 0, 6, 0, 2,
+						 1, 7, 3, 1, 5, 7 ,
+						 6, 2, 3, 6, 3, 7 };
 
-	current.SetPos(-1.0f, -1.0f, 0.0f);
-	vec.push_back(current);
+	object_->AddIndexArray(indices, 36);
 
-	current.SetPos(-1.0f, 1.0f, 0.0f);
-	vec.push_back(current);
 
-	current.SetPos(1.0f, 1.0f, 0.0f);
-	vec.push_back(current);
 
 	LoadShadersAndLayout();
 
