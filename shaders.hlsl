@@ -13,6 +13,7 @@ cbuffer Cam : register(b1)
 {
 	float4 CamPos;
 	float4 CamDir;
+	float  Step;
 }
 
 struct GS_INPUT
@@ -140,19 +141,24 @@ float4 SampleTexture(float3 pos)
 
 float4 GetRMColorAdding(float4 end)
 {
-	const float step = 0.01f;
+	//const float step = 0.001f;
 
 	float4 dir = mul(normalize(CamPos - end), InverseWorld);
 
 	float3 current = mul(end, InverseWorld);
-	float4 color = { 0.0f, 0.0f, 0.0f, 0.0f };
+	float colorAdding = 0.0f;
 	float newColor = 0.0f;
 
 
 	float coeffSource = 0.6f;
-	float coeffNew = 100.0f * step;
+	float coeffNew = 100.0f * Step;
+	
+	int iterations= 0;
+	if (LengthSqr(Size) > LengthSqr(CamPos - end)) 
+		iterations = sqrt(LengthSqr(CamPos - end)) / Step;
+	else
+		iterations = sqrt(LengthSqr(Size)) / Step;
 
-	const int iterations = sqrt(LengthSqr(Size)) / step;
 
 	for (int i = 0; i < iterations; i++)
 	{
@@ -160,14 +166,14 @@ float4 GetRMColorAdding(float4 end)
 			float3 (current.x / Size.x + 0.5f,
 					current.z / Size.y + 0.5f,
 					current.y / Size.z + 0.5f), 0);
-		current += dir*step;
+		current += dir*Step;
 		if (newColor < 0.01f) continue;
-		color += float4 (0.0f, newColor, newColor, newColor)*coeffNew;
+		colorAdding += newColor*coeffNew;
 		/*if (current.x / Size.x > 0.5f || current.x / Size.x < -0.5f ||
 			current.z / Size.y > 0.5f || current.z / Size.y < -0.5f ||
 			current.y / Size.z > 0.5f || current.y / Size.z < -0.5f) break;*/
 	}
-	return color;
+	return float4 (0.0f, colorAdding, colorAdding, colorAdding);
 }
 
 

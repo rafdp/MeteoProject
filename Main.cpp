@@ -3,11 +3,15 @@
 
 ExceptionData_t* __EXPN__ = nullptr;
 
+#define TARGET_FPS 40.0f
+
 
 struct CamInfo_t
 {
 	XMFLOAT4 pos;
 	XMFLOAT4 dir;
+	float    step;
+	float	 bounding[3];
 };
 
 void ProcessCam (Direct3DCamera* cam);
@@ -35,7 +39,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 		//d3dProc.ApplyRasterizerState (d3dProc.AddRasterizerState (false, false, true));
 
 		//XMMATRIX world = XMMatrixTranslation (0.0f, 0.0f, 0.0f);
-		CamInfo_t camInfo = { { BASE_X, BASE_Y, BASE_Z, 1.0f }};
+		CamInfo_t camInfo = { { BASE_X, BASE_Y, BASE_Z, 1.0f }, {}, 0.01f };
 		Direct3DCamera cam (&window,
 							camInfo.pos.x, camInfo.pos.y, camInfo.pos.z,
 							0.0f, -1.0f, 1.0f,
@@ -95,7 +99,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 			cam.StorePos (camInfo.pos);
 			d3dProc.UpdateConstantBuffer (camBuf);
 
-			d3dProc.SendCBToGS(camBuf);
+			d3dProc.SendCBToGS (camBuf);
 			d3dProc.SendCBToPS (camBuf);
 			d3dProc.ProcessDrawing (&cam, true);
 			d3dProc.Present ();
@@ -105,7 +109,12 @@ int WINAPI WinMain (HINSTANCE hInstance,
 				ticksOld = ticksNew;
 				ticksNew = GetTickCount64();
 
-				printf ("%.2f fps            \r", 10000.0f/(ticksNew - ticksOld));
+				printf ("%.2f fps %f step           \r", 10000.0f/(ticksNew - ticksOld), camInfo.step);
+
+				if (10000.0f / (ticksNew - ticksOld) > TARGET_FPS)
+					 camInfo.step -= 0.0005f * (10000.0f / (ticksNew - ticksOld) - TARGET_FPS) / 20.0f;
+				else camInfo.step += 0.0005f * (TARGET_FPS - 10000.0f / (ticksNew - ticksOld)) / 20.0f;
+				if (camInfo.step < 0.0f) camInfo.step = 0.00005f;
 			}
 			ticksN++;
 		}
