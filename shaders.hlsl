@@ -140,17 +140,17 @@ float4 SampleTexture(float3 pos)
 
 float4 GetRMColorAdding(float4 end)
 {
-	const float step = 0.005f;
+	const float step = 0.01f;
 
 	float4 dir = mul(normalize(CamPos - end), InverseWorld);
 
 	float3 current = mul(end, InverseWorld);
 	float4 color = { 0.0f, 0.0f, 0.0f, 0.0f };
-	float4 newColor = color;
+	float newColor = 0.0f;
 
 
 	float coeffSource = 0.6f;
-	float coeffNew = 0.2f;
+	float coeffNew = 100.0f * step;
 
 	const int iterations = sqrt(LengthSqr(Size)) / step;
 
@@ -160,8 +160,9 @@ float4 GetRMColorAdding(float4 end)
 			float3 (current.x / Size.x + 0.5f,
 					current.z / Size.y + 0.5f,
 					current.y / Size.z + 0.5f), 0);
-		color += newColor*coeffNew;
 		current += dir*step;
+		if (newColor < 0.01f) continue;
+		color += float4 (0.0f, newColor, newColor, newColor)*coeffNew;
 		/*if (current.x / Size.x > 0.5f || current.x / Size.x < -0.5f ||
 			current.z / Size.y > 0.5f || current.z / Size.y < -0.5f ||
 			current.y / Size.z > 0.5f || current.y / Size.z < -0.5f) break;*/
@@ -179,5 +180,5 @@ float4 PShaderRM(PS_INPUT_ pos) : SV_TARGET
 float4 PShaderRM_Map(PS_INPUT input) : SV_TARGET
 {
 	//Slow as hell, need to find workaround
-	return input.color + GetRMColorAdding (input.worldPos);
+	return input.color/* + GetRMColorAdding (input.worldPos)*/;
 }

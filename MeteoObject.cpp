@@ -589,13 +589,13 @@ void MeteoObject::Create3dTexture()
 	desc.Width = DATA_WIDTH;
 	desc.Height = DATA_HEIGHT;
 	desc.MipLevels = 1;
-	desc.Depth = 7;
-	desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.Depth = SLICES;
+	desc.Format = DXGI_FORMAT_R32_FLOAT;
+	desc.Usage  = D3D11_USAGE_DEFAULT;
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 
 
-	D3D11_SUBRESOURCE_DATA initData = {dl_.Offset (0, 0, 0, currentHour_), DATA_WIDTH * sizeof (XMFLOAT4), DATA_HEIGHT * DATA_WIDTH * sizeof(XMFLOAT4) };
+	D3D11_SUBRESOURCE_DATA initData = {dl_.Offset (0, 0, 0, currentHour_), DATA_WIDTH * sizeof (float), DATA_HEIGHT * DATA_WIDTH * sizeof(float) };
 	
 	HRESULT result = S_OK;
 
@@ -649,18 +649,18 @@ void MeteoObject::InitRayMarching ()
 
 	for (int i = 0; i < 8; i++)
 	{
-		current.SetPos((i & 0b100 ? (-1.0f) : (1.0f)) * REGION_X / 2.0 - 0.005f, 
-					   (i & 0b010 ? (-1.0f) : (1.0f)) * REGION_Z / 2.0 - 0.005f, 
-					   (i & 0b001 ? (-1.0f) : (1.0f)) * REGION_Y / 2.0 - 0.005f);
+		current.SetPos((i & 0b100 ? (-1.0f) : (1.0f)) * (REGION_X / 2.0 - 0.005f), 
+					   (i & 0b010 ? (-1.0f) : (1.0f)) * (REGION_Z / 2.0 - 0.005f), 
+					   (i & 0b001 ? (-1.0f) : (1.0f)) * (REGION_Y / 2.0 - 0.005f));
 		vec.push_back(current);
 	}
 
 	UINT indices[36] = { 0, 4, 5, 0, 5, 1,
 						 0, 1, 2, 2, 1, 3,
 						 6, 5, 4, 6, 7, 5,
+						 6, 2, 3, 6, 3, 7,
 						 6, 4, 0, 6, 0, 2,
-						 1, 7, 3, 1, 5, 7 ,
-						 6, 2, 3, 6, 3, 7 };
+						 1, 7, 3, 1, 5, 7 };
 
 	object_->AddIndexArray(indices, 36);
 

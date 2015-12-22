@@ -51,7 +51,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 
 		MeteoObject meteo ("Data/COSMOMESH", "Data/Fronts", "Data/H", &d3dProc, &cam);
 		cam.Update ();
-		SetForegroundWindow (window.hwnd ());
+		//SetForegroundWindow (window.hwnd ());
 
 
 		d3dProc.ProcessObjects ();
@@ -60,9 +60,10 @@ int WINAPI WinMain (HINSTANCE hInstance,
 		MSG msg = {};
 		bool rotate = true;
 		bool wasPressedSpace = false;
+		uint64_t ticksOld = 0;
+		uint64_t ticksNew = GetTickCount64 ();
+		char ticksN = 0;
 		
-		printf ("18.9.15 00:00\r");
-
 		int hour = 0;
 		while (true)
 		{
@@ -85,25 +86,11 @@ int WINAPI WinMain (HINSTANCE hInstance,
 				}
 			}
 			else wasPressedSpace = false;
-			/*
-			if (GetAsyncKeyState ('N'))
-			{
-				if (!wasPressedN)
-				{
-					meteo.NextHour (&d3dProc);
-					hour++;
-					if (hour == 25) hour = 0;
-					printf ("18.9.15 %02d:00\r", hour);
-					wasPressedN = true;
-				}
-			}
-			else wasPressedN = false;*/
 
 			ProcessCam (&cam);
 
 			meteo.PreDraw ();
 
-			//cam.RotateHorizontal (0.1f);
 			cam.Update ();
 			cam.StorePos (camInfo.pos);
 			d3dProc.UpdateConstantBuffer (camBuf);
@@ -112,8 +99,15 @@ int WINAPI WinMain (HINSTANCE hInstance,
 			d3dProc.SendCBToPS (camBuf);
 			d3dProc.ProcessDrawing (&cam, true);
 			d3dProc.Present ();
+			if (ticksN >= 10)
+			{
+				ticksN = 0;
+				ticksOld = ticksNew;
+				ticksNew = GetTickCount64();
 
-			//Sleep (10);
+				printf ("%.2f fps            \r", 10000.0f/(ticksNew - ticksOld));
+			}
+			ticksN++;
 		}
 		FreeConsole ();
 	}

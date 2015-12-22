@@ -10,7 +10,7 @@ MeteoDataLoader::MeteoDataLoader (std::string cosmomesh,
 								  Direct3DProcessor* proc) 
 try : 
 	data_         (),
-	frontColors_  (new XMFLOAT4 [DATA_WIDTH*DATA_HEIGHT*SLICES*HOURS])
+	frontColors_  (new float [DATA_WIDTH*DATA_HEIGHT*SLICES*HOURS])
 {
 	FILE* currentFile = nullptr;
 
@@ -59,22 +59,21 @@ void MeteoDataLoader::Float2Color() const
 				for (int y = 0; y < DATA_HEIGHT; y++)
 				{
 					color = data_.front(x, y, slice, hour) / 12.0f;
-					//if (color - 0.5f) _MessageBox ("%d %d %d %f", x, y, slice, color);
+					
+					if (color > 2.0f) color = 0.0f;
 					if (color > 1.0f) color = 1.0f;
+
 					frontColors_[hour * (SLICES * DATA_HEIGHT * DATA_WIDTH) +
 						slice * (DATA_HEIGHT * DATA_WIDTH) +
 						y * DATA_WIDTH +
-						x] = { 0.0f, 
-								color > 0.3f ? 1.0f : 0.0f , 
-								color > 0.3f ? 1.0f : 0.0f , 
-								color > 0.3f ? 1.0f : 0.0f };
+						x] = color;
 				}
 			}
 		}
 	}
 }
 
-XMFLOAT4* MeteoDataLoader::Offset(short x, short y, short slice, char hour) const
+float* MeteoDataLoader::Offset(short x, short y, short slice, char hour) const
 {
 	return frontColors_ + hour * (SLICES * DATA_HEIGHT * DATA_WIDTH) +
 		slice * (DATA_HEIGHT * DATA_WIDTH) +

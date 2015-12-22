@@ -27,7 +27,7 @@ class MeteoDataLoader : NZA_t
 {
 	friend class MeteoObject;
 	MeteoData_t data_;
-	XMFLOAT4* frontColors_;
+	float* frontColors_;
 
 public:
 
@@ -40,7 +40,7 @@ public:
 
 	void Float2Color () const;
 
-	XMFLOAT4* Offset (short x, short y, short slice, char hour = 0) const;
+	float* Offset (short x, short y, short slice, char hour = 0) const;
 
 	~MeteoDataLoader ();
 };
