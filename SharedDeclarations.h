@@ -166,4 +166,6 @@ const float BASE_X = 0.0f;
 const float BASE_Y = 2.0f;
 const float BASE_Z = -2.0f;
 
+const int SCREEN_NOISE_SIZE = 16;
+
 #undef E

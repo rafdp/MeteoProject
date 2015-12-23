@@ -3,7 +3,7 @@
 
 ExceptionData_t* __EXPN__ = nullptr;
 
-#define TARGET_FPS 5.0f
+#define TARGET_FPS 30.0f
 
 
 struct CamInfo_t
@@ -44,7 +44,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 							camInfo.pos.x, camInfo.pos.y, camInfo.pos.z,
 							0.0f, -1.0f, 1.0f,
 							0.0, 1.0f, 0.0f,
-							FOV, 0.1f);
+							FOV, 0.001f);
 
 		XMStoreFloat4(&camInfo.dir, cam.GetDir());
 
@@ -115,8 +115,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 					 camInfo.step -= 0.0005f * (10000.0f / (ticksNew - ticksOld) - TARGET_FPS) / 20.0f;
 				else camInfo.step += 0.0005f * (TARGET_FPS - 10000.0f / (ticksNew - ticksOld)) / 20.0f;
 				if (camInfo.step < 0.0f) camInfo.step = 0.00005f;
-				if (GetAsyncKeyState('G')) camInfo.step = 0.001f;
-				else camInfo.step = 0.01f;
+				
 			}
 			ticksN++;
 		}
@@ -181,12 +180,12 @@ void ProcessCam (Direct3DCamera* cam)
 	if (GetAsyncKeyState ('M'))
 	{
 		if (cam->GetFOV () < 0.9)
-			cam->GetFOV () += 0.01;
+			cam->GetFOV () += 0.01f;
 	}
 	if (GetAsyncKeyState ('L'))
 	{
 		if (cam->GetFOV () > 0.025)
-			cam->GetFOV () -= 0.01;
+			cam->GetFOV () -= 0.01f;
 	}
 	if (GetAsyncKeyState (VK_UP))
 	{

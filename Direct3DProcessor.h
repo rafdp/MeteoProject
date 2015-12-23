@@ -106,6 +106,7 @@ public:
 	void ReloadShaders ();
 
 	ID3D11Device* GetDevice ();
+	ID3D11DeviceContext* GetDeviceContext();
 
 	WindowClass* GetWindowPtr ();
 

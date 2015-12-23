@@ -24,13 +24,16 @@ class MeteoObject : NZA_t
 	LayoutIndex_t layout_;
 	LayoutIndex_t layoutRM_;
     TextureIndex_t texture_;
+	TextureIndex_t texture2_;
 	SamplerIndex_t sampler_;
+	SamplerIndex_t sampler2_;
 	ConstantBufferIndex_t cb_;
 	MeteoObjectShaderData_t* meteoData_;
 	Direct3DProcessor* proc_;
 	Direct3DCamera* cam_;
 	Direct3DCamera bak_;
 	bool drawShuttle_;
+	float screenNoise_[SCREEN_NOISE_SIZE][SCREEN_NOISE_SIZE];
 
 	public:
 

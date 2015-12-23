@@ -726,6 +726,11 @@ ID3D11Device * Direct3DProcessor::GetDevice ()
 	return device_;
 }
 
+ID3D11DeviceContext* Direct3DProcessor::GetDeviceContext()
+{
+	return deviceContext_;
+}
+
 WindowClass * Direct3DProcessor::GetWindowPtr ()
 {
 	return wnd_;
