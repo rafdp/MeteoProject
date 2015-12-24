@@ -14,7 +14,7 @@ struct CamInfo_t
 	float	 bounding[3];
 };
 
-void ProcessCam (Direct3DCamera* cam);
+void ProcessCam (Direct3DCamera* cam, CamInfo_t* info);
 
 int WINAPI WinMain (HINSTANCE hInstance,
 					HINSTANCE legacy,
@@ -44,7 +44,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 							camInfo.pos.x, camInfo.pos.y, camInfo.pos.z,
 							0.0f, -1.0f, 1.0f,
 							0.0, 1.0f, 0.0f,
-							FOV, 0.001f);
+							FOV, 0.5f);
 
 		XMStoreFloat4(&camInfo.dir, cam.GetDir());
 
@@ -53,7 +53,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 																	   1);
 		d3dProc.UpdateConstantBuffer (camBuf);
 
-		MeteoObject meteo ("Data/COSMOMESH", "Data/Fronts", "Data/H", &d3dProc, &cam);
+		MeteoObject meteo ("Data/COSMOMESH", "Data/Fronts", "Data/H", &camInfo.step, 0.01f, &d3dProc, &cam);
 		cam.Update ();
 		//SetForegroundWindow (window.hwnd ());
 
@@ -91,7 +91,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 			}
 			else wasPressedSpace = false;
 
-			ProcessCam (&cam);
+			ProcessCam (&cam, &camInfo);
 
 			meteo.PreDraw ();
 
@@ -111,10 +111,12 @@ int WINAPI WinMain (HINSTANCE hInstance,
 
 				printf ("%.2f fps %f step           \r", 10000.0f/(ticksNew - ticksOld), camInfo.step);
 
-				if (10000.0f / (ticksNew - ticksOld) > TARGET_FPS)
-					 camInfo.step -= 0.0005f * (10000.0f / (ticksNew - ticksOld) - TARGET_FPS) / 20.0f;
-				else camInfo.step += 0.0005f * (TARGET_FPS - 10000.0f / (ticksNew - ticksOld)) / 20.0f;
-				if (camInfo.step < 0.0f) camInfo.step = 0.00005f;
+				if (10000.0f / (ticksNew - ticksOld) - TARGET_FPS > 10.0f)
+					 camInfo.step -= 0.0005f;
+				else 
+				if (10000.0f / (ticksNew - ticksOld) - TARGET_FPS < -10.0f)
+					camInfo.step += 0.0005f;
+				if (camInfo.step < 0.0f) camInfo.step = 0.0001f;
 				
 			}
 			ticksN++;
@@ -141,7 +143,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 }
 
 
-void ProcessCam (Direct3DCamera* cam)
+void ProcessCam (Direct3DCamera* cam, CamInfo_t* info)
 {
 	float k = 0.5f;
 	if (GetAsyncKeyState (VK_LSHIFT)) k *= 5;
@@ -176,6 +178,7 @@ void ProcessCam (Direct3DCamera* cam)
 	{
 		cam->SetPos ({ BASE_X,  BASE_Y,  BASE_Z, 1.0f});
 		cam->SetDir ({-BASE_X, -BASE_Y, -BASE_Z, 1.0f});
+		info->step = 0.01f;
 	}
 	if (GetAsyncKeyState ('M'))
 	{

@@ -6,6 +6,8 @@ struct MeteoObjectShaderData_t
 {
 	XMMATRIX inverseWorld_;
 	XMVECTOR size_;
+	float shuttle;
+	float bounding[3];
 };
 
 class MeteoObject : NZA_t
@@ -34,12 +36,16 @@ class MeteoObject : NZA_t
 	Direct3DCamera bak_;
 	bool drawShuttle_;
 	float screenNoise_[SCREEN_NOISE_SIZE][SCREEN_NOISE_SIZE];
+	float* stepPtr_;
+	const float std_step_;
 
 	public:
 
 	MeteoObject (std::string cosmomesh,
 				 std::string fronts,
 				 std::string height,
+				 float* stepPtr,
+				 float std_step,
 				 Direct3DProcessor* proc,
 				 Direct3DCamera* cam);
 

@@ -6,6 +6,8 @@
 MeteoObject::MeteoObject (std::string cosmomesh,
 					 	  std::string fronts,
 				 		  std::string height,
+						  float* stepPtr,
+						  float std_step,
 			 			  Direct3DProcessor* proc,
 						  Direct3DCamera* cam)
 	try :
@@ -32,8 +34,11 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	cam_         (cam),
 	bak_         (*cam),
 	drawShuttle_ (false),
-	screenNoise_ ()
+	screenNoise_ (),
+	stepPtr_     (stepPtr),
+	std_step_    (std_step)
 {
+	meteoData_->shuttle = -1.0f;
 	ok ();
 	CreateMap();
 
@@ -265,12 +270,15 @@ void MeteoObject::SwitchCams ()
 {
 	BEGIN_EXCEPTION_HANDLING
 
-	//printf ("CAPS %d\n", (GetKeyState (VK_CAPITAL) & 0x1));
+		//printf ("CAPS %d\n", (GetKeyState (VK_CAPITAL) & 0x1));
+
+		*stepPtr_ = std_step_;
 
 	if (!drawShuttle_)
 	{
 		if (!shuttleSet_) return;
 		drawShuttle_ = true;
+		meteoData_->shuttle = 1.0f;
 
 		bak_ = *cam_;
 		Vertex_t& tempV = shuttle_->GetVertices ()[0];
@@ -293,6 +301,7 @@ void MeteoObject::SwitchCams ()
 	*cam_ = bak_;
 	proc_->RegisterObject (shuttle_);
 	drawShuttle_ = false;
+	meteoData_->shuttle = -1.0f;
 
 	END_EXCEPTION_HANDLING (SWITCH_CAMS)
 }

@@ -73,20 +73,20 @@ void GShaderShuttle (point GS_INPUT input[1],
 
 	for (int i = 0; i < 6; i++)
 		output[i].color = input[0].color;
-	output[1].position = mul(float4 (input[0].worldPos.xyz + (upAxis - rightAxis) * d, 1.0f), VP);
-	output[0].position = mul(float4 (input[0].worldPos.xyz + (upAxis + rightAxis) * d, 1.0f), VP);
-	output[2].position = mul(float4 (input[0].worldPos.xyz + (-upAxis + rightAxis) * d, 1.0f), VP);
+	output[1].position = mul(mul (float4 (input[0].worldPos.xyz + (upAxis - rightAxis) * d, 1.0f), View), Projection);
+	output[0].position = mul(mul (float4 (input[0].worldPos.xyz + (upAxis + rightAxis) * d, 1.0f), View), Projection);
+	output[2].position = mul(mul (float4 (input[0].worldPos.xyz + (-upAxis + rightAxis) * d, 1.0f), View), Projection);
 
-	output[3].position = mul(float4 (input[0].worldPos.xyz + (upAxis - rightAxis) * d, 1.0f), VP);
-	output[4].position = mul(float4 (input[0].worldPos.xyz + (-upAxis - rightAxis) * d, 1.0f), VP);
-	output[5].position = mul(float4 (input[0].worldPos.xyz + (-upAxis + rightAxis) * d, 1.0f), VP);
+	output[3].position = mul(mul (float4 (input[0].worldPos.xyz + (upAxis - rightAxis) * d, 1.0f), View), Projection);
+	output[4].position = mul(mul (float4 (input[0].worldPos.xyz + (-upAxis - rightAxis) * d, 1.0f), View), Projection);
+	output[5].position = mul(mul (float4 (input[0].worldPos.xyz + (-upAxis + rightAxis) * d, 1.0f), View), Projection);
 
-	OutputStream.Append(output[0]);
 	OutputStream.Append(output[1]);
+	OutputStream.Append(output[0]);
 	OutputStream.Append(output[2]);
 	OutputStream.RestartStrip();
-	OutputStream.Append(output[3]);
 	OutputStream.Append(output[4]);
+	OutputStream.Append(output[3]);
 	OutputStream.Append(output[5]);
 }
 
@@ -117,6 +117,7 @@ cbuffer Fronts : register(b2)
 {
 	float4x4 InverseWorld;
 	float4 Size;
+	float Shuttle;
 }
 
 float LengthSqr(float4 pt)
@@ -148,7 +149,7 @@ float4 GetRMColorAdding(float4 end)
 {
 	//const float step = 0.001f;
 
-	float4 dir = mul(normalize(CamPos - end), InverseWorld);
+	float4 dir = mul(normalize(end - CamPos), InverseWorld);
 	float s = NoiseTexture.Sample(NoiseSamplerState, 17.0f*dir.xz);
 
 	float3 current = mul(end, InverseWorld) + dir * Step * s * 0.5f;
@@ -165,12 +166,18 @@ float4 GetRMColorAdding(float4 end)
 	else
 		iterations = sqrt(LengthSqr(Size)) / Step;
 
+	current -= dir*iterations*Step;
+
+	int iterationsN = iterations;
+
+	if (Shuttle > 0.0f) iterationsN /= 3;
+
 	float k = 0.1f;
 
 	bool inside = false;
 
 
-	for (int i = 0; i < iterations; i++)
+	for (int i = 0; i < iterationsN; i++)
 	{
 		newColor = FrontTexture.SampleLevel(FrontSamplerState,
 			float3 (current.x / Size.x + 0.5f,
@@ -178,9 +185,13 @@ float4 GetRMColorAdding(float4 end)
 					current.y / Size.z + 0.5f), 0);
 		current += dir*Step * (inside ? 0.5f : 1.0f);
 		k += 1.0f / iterations;
-		if (newColor < 0.1f) { inside = false; continue; }
+		if (newColor < 0.1f) 
+		{ 
+			inside = false; 
+			continue; 
+		}
 		if (!inside) {inside = true;}
-		colorAdding += newColor*coeffNew*k;
+		colorAdding += newColor*coeffNew;
 		/*if (current.x / Size.x > 0.5f || current.x / Size.x < -0.5f ||
 			current.z / Size.y > 0.5f || current.z / Size.y < -0.5f ||
 			current.y / Size.z > 0.5f || current.y / Size.z < -0.5f) break;*/
