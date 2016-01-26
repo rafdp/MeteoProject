@@ -153,12 +153,12 @@ float4 GetRMColorAdding(float4 end)
 	float s = NoiseTexture.Sample(NoiseSamplerState, 17.0f*dir.xz);
 
 	float3 current = mul(end, InverseWorld) + dir * Step * s * 0.5f;
-	float colorAdding = 0.0f;
+	float4 colorAdding = {0.0f, 0.0f, 0.0f, 0.0f};
 	float newColor = 0.0f;
 
 
 	float coeffSource = 0.6f;
-	float coeffNew = 100.0f * Step;
+	float coeffNew = 35.0f * Step;
 	
 	int iterations = 0;
 	if (LengthSqr(Size) > LengthSqr(CamPos - end)) 
@@ -170,7 +170,7 @@ float4 GetRMColorAdding(float4 end)
 
 	int iterationsN = iterations;
 
-	if (Shuttle > 0.0f) iterationsN /= 3;
+	if (Shuttle > 0.0f) iterationsN /= 2;
 
 	float k = 0.1f;
 
@@ -191,12 +191,38 @@ float4 GetRMColorAdding(float4 end)
 			continue; 
 		}
 		if (!inside) {inside = true;}
-		colorAdding += newColor*coeffNew;
+		if (newColor)
+		{
+			if (newColor < 1.5f)
+			{
+				colorAdding += float4 (0.4f + 0.6f *      newColor,
+					0.4f - 0.259375f * newColor,
+					0.4f - 0.4f *      newColor,
+					newColor) * coeffNew;
+				/*if (newColor < 0.4f) colorAdding += float4 (0.5f, 0.5f, 0.5f, 1.0f);
+				else
+				if (newColor < 0.8f) colorAdding += float4 (0.75f, 0.3203125f, 0.25f, 1.0f);
+				else
+					colorAdding += float4 (1.0f, 0.140625f, 0.0f, 1.0f);*/
+			}
+				
+			else
+			if (newColor > 2.0f)
+			{
+				float d = 0.15625f * (newColor - 2.0f);
+				colorAdding += float4 (0.703125f   - d, 
+									   0.44921875f - d, 
+									   0.78125f    - d, 
+									   (newColor - 2.0f)) * coeffNew;
+			}
+				
+		}
+		//colorAdding += newColor*coeffNew;
 		/*if (current.x / Size.x > 0.5f || current.x / Size.x < -0.5f ||
 			current.z / Size.y > 0.5f || current.z / Size.y < -0.5f ||
 			current.y / Size.z > 0.5f || current.y / Size.z < -0.5f) break;*/
 	}
-	return float4 (0.0f, colorAdding/3.0f, colorAdding, colorAdding * 2.0f);
+	return colorAdding;
 }
 
 

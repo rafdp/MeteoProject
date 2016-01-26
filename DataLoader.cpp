@@ -58,10 +58,12 @@ void MeteoDataLoader::Float2Color() const
 			{
 				for (int y = 0; y < DATA_HEIGHT; y++)
 				{
-					color = data_.front(x, y, slice, hour) / 12.0f;
+					color = data_.front(x, y, slice, hour);
 					
-					if (color > 2.0f) color = 0.0f;
-					if (color > 1.0f) color = 1.0f;
+					if (color > 90.0f) color = color - 80.0f;
+					if (color > 12.0f) color = 12.0f;
+
+					color /= 12.0f;
 
 					frontColors_[hour * (SLICES * DATA_HEIGHT * DATA_WIDTH) +
 						slice * (DATA_HEIGHT * DATA_WIDTH) +

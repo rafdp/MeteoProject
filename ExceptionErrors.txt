@@ -1,7 +1,15 @@
-Exception with error code 36,
-error message: "void __thiscall Direct3DProcessor::Present(void): Error occurred"
-occurred in file: "c:\users\raffaele\documents\meteoproj\meteoproject\direct3dprocessor.cpp" on line 137
+Exception with error code 128,
+error message: "void __cdecl MeteoObject::PreDraw(void): Error occurred"
+occurred in file: "\psf\home\documents\meteoprojectgit\meteoproject1\meteoproject\meteoobject.cpp" on line 410
 caused by:
-Exception with error code 37,
-error message: "D3D: Swap chain present failed (0x887a0005)"
-occurred in file: "c:\users\raffaele\documents\meteoproj\meteoproject\direct3dprocessor.cpp" on line 136
+Exception with error code 96,
+error message: "void __cdecl Direct3DProcessor::SendTextureToPS(unsigned __int64,unsigned int): Error occurred"
+occurred in file: "\psf\home\documents\meteoprojectgit\meteoproject1\meteoproject\direct3dprocessor.cpp" on line 713
+caused by:
+Exception with error code 95,
+error message: "struct ID3D11ShaderResourceView *__cdecl Direct3DTextureManager::GetTexture(unsigned __int64): Error occurred"
+occurred in file: "\psf\home\documents\meteoprojectgit\meteoproject1\meteoproject\texturemanager.cpp" on line 80
+caused by:
+Exception with error code 41,
+error message: "D3D: Invalid texture index (0 of 0 available)"
+occurred in file: "\psf\home\documents\meteoprojectgit\meteoproject1\meteoproject\texturemanager.cpp" on line 77

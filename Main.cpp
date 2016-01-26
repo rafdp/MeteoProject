@@ -3,7 +3,7 @@
 
 ExceptionData_t* __EXPN__ = nullptr;
 
-#define TARGET_FPS 30.0f
+#define TARGET_FPS 10.0f
 
 
 struct CamInfo_t
