@@ -198,7 +198,7 @@ float4 GetRMColorAdding(float4 end)
 				colorAdding += float4 (0.4f + 0.6f *      newColor,
 					0.4f - 0.259375f * newColor,
 					0.4f - 0.4f *      newColor,
-					newColor) * coeffNew;
+					newColor*2.0f) * coeffNew;
 				/*if (newColor < 0.4f) colorAdding += float4 (0.5f, 0.5f, 0.5f, 1.0f);
 				else
 				if (newColor < 0.8f) colorAdding += float4 (0.75f, 0.3203125f, 0.25f, 1.0f);
