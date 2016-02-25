@@ -158,7 +158,7 @@ float4 GetRMColorAdding(float4 end)
 
 
 	float coeffSource = 0.6f;
-	float coeffNew = 35.0f * Step;
+	float coeffNew = 50.0f * Step;
 	
 	int iterations = 0;
 	if (LengthSqr(Size) > LengthSqr(CamPos - end)) 
@@ -172,10 +172,9 @@ float4 GetRMColorAdding(float4 end)
 
 	if (Shuttle > 0.0f) iterationsN /= 2;
 
-	float k = 0.1f;
 
 	bool inside = false;
-
+	int timeInside = 0;
 
 	for (int i = 0; i < iterationsN; i++)
 	{
@@ -183,19 +182,20 @@ float4 GetRMColorAdding(float4 end)
 			float3 (current.x / Size.x + 0.5f,
 					current.z / Size.y + 0.5f,
 					current.y / Size.z + 0.5f), 0);
-		current += dir*Step * (inside ? 0.5f : 1.0f);
-		k += 1.0f / iterations;
+		current += dir*Step * (inside ? 0.25f : 1.0f);
 		if (newColor < 0.1f) 
 		{ 
 			inside = false; 
+			i -= (3*timeInside)/4;
 			continue; 
 		}
 		if (!inside) {inside = true;}
-		if (newColor)
+		if (newColor > 0.0f)
 		{
+			timeInside++;
 			if (newColor < 1.5f)
 			{
-				colorAdding += float4 (0.4f + 0.6f *      newColor,
+				colorAdding = colorAdding * (1.0f - coeffNew) + float4 (0.4f + 0.6f *newColor,
 					0.4f - 0.259375f * newColor,
 					0.4f - 0.4f *      newColor,
 					newColor*2.0f) * coeffNew;
@@ -210,10 +210,10 @@ float4 GetRMColorAdding(float4 end)
 			if (newColor > 2.0f)
 			{
 				float d = 0.15625f * (newColor - 2.0f);
-				colorAdding += float4 (0.703125f   - d, 
+				colorAdding = colorAdding * (1.0f - coeffNew) + float4 (0.703125f   - d,
 									   0.44921875f - d, 
 									   0.78125f    - d, 
-									   (newColor - 2.0f)) * coeffNew;
+									   (newColor - 0.0f)) * coeffNew;
 			}
 				
 		}
