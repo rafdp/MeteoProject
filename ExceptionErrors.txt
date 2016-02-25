@@ -1,7 +1,7 @@
 Exception with error code 36,
 error message: "void __cdecl Direct3DProcessor::Present(void): Error occurred"
-occurred in file: "\psf\home\documents\meteoprojectgit\meteoproject1\meteoproject\direct3dprocessor.cpp" on line 137
+occurred in file: "Direct3DProcessor.cpp" on line 137
 caused by:
 Exception with error code 37,
-error message: "D3D: Swap chain present failed (0x87a0001)"
-occurred in file: "\psf\home\documents\meteoprojectgit\meteoproject1\meteoproject\direct3dprocessor.cpp" on line 136
+error message: "D3D: Swap chain present failed (0x887a0005)"
+occurred in file: "Direct3DProcessor.cpp" on line 136
