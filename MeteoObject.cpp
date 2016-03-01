@@ -55,6 +55,8 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	cb_ = proc_->RegisterConstantBuffer (meteoData_, sizeof(MeteoObjectShaderData_t), 2);
 	
 	proc_->UpdateConstantBuffer(cb_);
+
+	FrontAnalyzer frontanal(&dl_, 0);
 	
 }
 _END_EXCEPTION_HANDLING (CTOR)
