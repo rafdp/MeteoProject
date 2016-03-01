@@ -344,14 +344,18 @@ void MeteoObject::Create3dTexture()
 		proc_->AddToDelete(tex);
 		proc_->AddToDelete(srv);
 
-		srand(time(nullptr));
-
-		for (int x = 0; x < SCREEN_NOISE_SIZE; x++)
-			for (int y = 0; y < SCREEN_NOISE_SIZE; y++)
-				screenNoise_[x][y] = rand() / (1.0f * RAND_MAX);
+		
 	}
 
 	HRESULT result = S_OK;
+
+	srand(time(nullptr));
+
+	for (int x = 0; x < SCREEN_NOISE_SIZE; x++)
+		for (int y = 0; y < SCREEN_NOISE_SIZE; y++)
+		{
+			screenNoise_[x][y] = (rand() * 1.0f) / (1.0f * RAND_MAX);
+		}
 	
 	D3D11_TEXTURE2D_DESC desc2 = {};
 	desc2.ArraySize = 1;

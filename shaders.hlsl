@@ -13,6 +13,7 @@ cbuffer Cam : register(b1)
 	float4 CamPos;
 	float4 CamDir;
 	float  Step;
+	float  Noise;
 }
 
 struct GS_INPUT
@@ -150,9 +151,10 @@ float4 GetRMColorAdding(float4 end)
 	//const float step = 0.001f;
 
 	float4 dir = mul(normalize(end - CamPos), InverseWorld);
-	float s = NoiseTexture.Sample(NoiseSamplerState, 17.0f*dir.xz);
+	float s = 0.0f;
+	if (Noise > 1.0f) s = NoiseTexture.Sample (NoiseSamplerState, 24.0f * dir.xy);
 
-	float3 current = mul(end, InverseWorld) + dir * Step * s * 0.5f;
+	float3 current = mul(end, InverseWorld) + dir * Step * s;
 	float4 colorAdding = {0.0f, 0.0f, 0.0f, 0.0f};
 	float newColor = 0.0f;
 
@@ -187,6 +189,7 @@ float4 GetRMColorAdding(float4 end)
 		{ 
 			inside = false; 
 			i -= (3*timeInside)/4;
+			timeInside = 0;
 			continue; 
 		}
 		if (!inside) {inside = true;}
@@ -198,7 +201,7 @@ float4 GetRMColorAdding(float4 end)
 				colorAdding = colorAdding * (1.0f - coeffNew) + float4 (0.4f + 0.6f *newColor,
 					0.4f - 0.259375f * newColor,
 					0.4f - 0.4f *      newColor,
-					newColor*2.0f) * coeffNew;
+					sin (newColor * 3.141593 / 2)) * coeffNew;
 				/*if (newColor < 0.4f) colorAdding += float4 (0.5f, 0.5f, 0.5f, 1.0f);
 				else
 				if (newColor < 0.8f) colorAdding += float4 (0.75f, 0.3203125f, 0.25f, 1.0f);
@@ -213,7 +216,7 @@ float4 GetRMColorAdding(float4 end)
 				colorAdding = colorAdding * (1.0f - coeffNew) + float4 (0.703125f   - d,
 									   0.44921875f - d, 
 									   0.78125f    - d, 
-									   (newColor - 0.0f)) * coeffNew;
+									   (newColor - 2.0f)) * coeffNew;
 			}
 				
 		}

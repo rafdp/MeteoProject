@@ -3,7 +3,7 @@
 
 ExceptionData_t* __EXPN__ = nullptr;
 
-#define TARGET_FPS 10.0f
+#define TARGET_FPS 20.0f
 
 
 struct CamInfo_t
@@ -11,7 +11,8 @@ struct CamInfo_t
 	XMFLOAT4 pos;
 	XMFLOAT4 dir;
 	float    step;
-	float	 bounding[3];
+	float	 noise;
+	float	 bounding[2];
 };
 
 void ProcessCam (Direct3DCamera* cam, CamInfo_t* info);
@@ -39,7 +40,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 		//d3dProc.ApplyRasterizerState (d3dProc.AddRasterizerState (false, false, true));
 
 		//XMMATRIX world = XMMatrixTranslation (0.0f, 0.0f, 0.0f);
-		CamInfo_t camInfo = { { BASE_X, BASE_Y, BASE_Z, 1.0f }, {}, 0.01f };
+		CamInfo_t camInfo = { { BASE_X, BASE_Y, BASE_Z, 1.0f }, {}, 0.01f , 0.0f};
 		Direct3DCamera cam (&window,
 							camInfo.pos.x, camInfo.pos.y, camInfo.pos.z,
 							0.0f, -1.0f, 1.0f,
@@ -81,7 +82,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 			// SCENE PROCESSING
 
 			if (rotate) meteo.Rotate (0.01f);
-			if (GetAsyncKeyState (VK_SPACE))
+			if (GetAsyncKeyState (VK_SPACE) & 0x8000)
 			{
 				if (!wasPressedSpace)
 				{
@@ -90,6 +91,11 @@ int WINAPI WinMain (HINSTANCE hInstance,
 				}
 			}
 			else wasPressedSpace = false;
+			if (GetAsyncKeyState('J') & 0x8000)
+			{
+				while (GetAsyncKeyState('J'));
+				camInfo.noise = 2.0f - camInfo.noise;
+			}
 
 			ProcessCam (&cam, &camInfo);
 
@@ -109,7 +115,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 				ticksOld = ticksNew;
 				ticksNew = GetTickCount64();
 
-				printf ("%.2f fps %f step           \r", 10000.0f/(ticksNew - ticksOld), camInfo.step);
+				printf ("%.2f fps %f step noise %s          \r", 10000.0f/(ticksNew - ticksOld), camInfo.step, camInfo.noise > 1.0f ? "ON" : "OFF");
 
 				if (10000.0f / (ticksNew - ticksOld) - TARGET_FPS > 10.0f)
 					 camInfo.step -= 0.0005f;
