@@ -122,6 +122,8 @@ enum ERRORS
 	E (127, CREATE_SHADER_RESOURCE_VIEW)
 	E (128, PREDRAW)
 	E (129, INIT_RAY_MARCHING)
+	E (130, NEGATIVE_SLICE)
+	E (131, NOT_ENOUGH_SECTIONS)
 };
 
 const wchar_t  APPLICATION_TITLE_W[] = L"MeteoProject";
@@ -167,5 +169,11 @@ const float BASE_Y = 2.0f;
 const float BASE_Z = -2.0f;
 
 const int SCREEN_NOISE_SIZE = 16;
+
+const int SECTIONS_X = 10;
+const int SECTIONS_Y = 3;
+
+const float SCALING_X = (SECTIONS_X * 1.0f) / (DATA_WIDTH  * 1.0f);
+const float SCALING_Y = (SECTIONS_Y * 1.0f) / (DATA_HEIGHT * 1.0f);
 
 #undef E

@@ -12,7 +12,7 @@ try :
 	ZeroMemory(set_, DATA_WIDTH * DATA_HEIGHT);
 	if (!mdl_)
 		_EXC_N(NULL_THIS, "Null MeteoDataLoader ptr");
-	std::vector<IntPair_t> current;
+	FrontInfo_t current;
 	FILE* f = nullptr;
 	fopen_s(&f, "Front.data", "wb");
 
@@ -29,13 +29,20 @@ try :
 	}
 	int allSize = fronts_.size ();
 
+	fwrite(&DATA_WIDTH, sizeof(int), 1, f);
+	fwrite(&DATA_HEIGHT, sizeof(int), 1, f);
+
+	fwrite(&SECTIONS_X, sizeof(int), 1, f);
+	fwrite(&SECTIONS_Y, sizeof(int), 1, f);
+
 	fwrite(&allSize, sizeof(int), 1, f);
 
 	for (auto currentFront : fronts_)
 	{
 		int size = currentFront.size();
 		fwrite (&size, sizeof (int), 1, f);
-		fwrite (currentFront.data (), sizeof(IntPair_t), size, f);
+		fwrite(&currentFront.sections_, sizeof(int), 1, f);
+		fwrite(currentFront.data(), sizeof(POINT), size, f);
 	}
 	printf("%d\n", fronts_.size());
 	while (!GetAsyncKeyState(VK_SPACE));
@@ -55,9 +62,13 @@ void FrontAnalyzer::ok()
 	DEFAULT_OK_BLOCK
 	if (slice_ == -1)
 		_EXC_N(NEGATIVE_SLICE, "Negative slice");
+
+	if (SECTIONS_X * SECTIONS_Y > 8 * sizeof (FrontInfo_t::sections_))
+		_EXC_N(NOT_ENOUGH_SECTIONS, "Not enough section bits");
+
 }
 
-void FrontAnalyzer::RecursiveFrontFinder(int x, int y, std::vector<IntPair_t>& current)
+void FrontAnalyzer::RecursiveFrontFinder(int x, int y, FrontInfo_t& current)
 {
 	const int RANGE = 2;
 
@@ -72,7 +83,7 @@ void FrontAnalyzer::RecursiveFrontFinder(int x, int y, std::vector<IntPair_t>& c
 
 	set_[x][y] = 2;
 
-	current.push_back({ x, y });
+	current.AddPoint(x, y);
 
 	for (int x_ = -RANGE; x_ <= RANGE; x_++)
 	{
@@ -87,4 +98,33 @@ void FrontAnalyzer::RecursiveFrontFinder(int x, int y, std::vector<IntPair_t>& c
 				RecursiveFrontFinder(x + x_, y + y_, current);
 		}
 	}
+}
+
+void FrontInfo_t::clear()
+{
+	points_.clear();
+	sections_ = 0;
+}
+
+bool FrontInfo_t::empty()
+{
+	return points_.empty();
+}
+
+size_t FrontInfo_t::size()
+{
+	return points_.size ();
+}
+
+POINT * FrontInfo_t::data()
+{
+	if (empty()) return nullptr;
+	return points_.data ();
+}
+
+void FrontInfo_t::AddPoint(int x, int y)
+{
+	unsigned char bit = int (x*SCALING_X) + 8 * int (y*SCALING_Y);
+	sections_ |= 1 << bit;
+	points_.push_back({ x, y });
 }
