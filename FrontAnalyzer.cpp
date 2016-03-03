@@ -39,9 +39,10 @@ try :
 
 	for (auto currentFront : fronts_)
 	{
+		currentFront.CalculateNear(fronts_);
 		int size = currentFront.size();
 		fwrite (&size, sizeof (int), 1, f);
-		fwrite(&currentFront.sections_, sizeof(int), 1, f);
+		fwrite(&currentFront.sections_, sizeof(SectionsType_t), 1, f);
 		fwrite(currentFront.data(), sizeof(POINT), size, f);
 	}
 	printf("%d\n", fronts_.size());
@@ -127,4 +128,48 @@ void FrontInfo_t::AddPoint(int x, int y)
 	unsigned char bit = int (x*SCALING_X) + 8 * int (y*SCALING_Y);
 	sections_ |= 1 << bit;
 	points_.push_back({ x, y });
+}
+
+void FrontInfo_t::CalculateNear(const std::vector<FrontInfo_t>& data)
+{
+	near_ = 0;
+
+	SectionsType_t nearSections = 0;
+	for (char shift = 0; shift < sizeof(SectionsType_t) * 8; shift++)
+	{
+		if (sections_ & 1 << shift)
+			nearSections |= 1 << shift;
+
+		if (shift >= SECTIONS_X)	 
+			nearSections |= 1 << (shift - SECTIONS_X);
+
+		if (shift < SECTIONS_X * (SECTIONS_Y - 1))
+			nearSections |= 1 << (shift + SECTIONS_X);
+
+		if ((shift % SECTIONS_X) > 0)
+		{
+			nearSections |= 1 << (shift - 1);
+			if (shift >= SECTIONS_X)
+				nearSections |= 1 << (shift - SECTIONS_X - 1);
+			if (shift < SECTIONS_X * (SECTIONS_Y - 1))
+				nearSections |= 1 << (shift + SECTIONS_X - 1);
+		}
+
+		if ((shift % SECTIONS_X) < SECTIONS_X - 1)
+		{
+			nearSections |= 1 << (shift + 1);
+			if (shift >= SECTIONS_X)
+				nearSections |= 1 << (shift - SECTIONS_X + 1);
+			if (shift < SECTIONS_X * (SECTIONS_Y - 1))
+				nearSections |= 1 << (shift + SECTIONS_X + 1);
+		}
+	}
+	
+	for (uint32_t i = 0; i < data.size(); i++)
+		near_ += (data[i].sections_ & nearSections) ? 1 : 0;
+
+	while (!GetAsyncKeyState(VK_SPACE));
+	while (GetAsyncKeyState(VK_SPACE));
+
+
 }

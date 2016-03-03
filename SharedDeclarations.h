@@ -154,6 +154,8 @@ typedef uint64_t TextureIndex_t;
 typedef uint64_t ShaderIndex_t;
 typedef uint64_t ConstantBufferIndex_t;
 
+typedef uint32_t SectionsType_t;
+
 const size_t DATA_WIDTH = 1000;
 const size_t DATA_HEIGHT = 500;
 
@@ -170,8 +172,8 @@ const float BASE_Z = -2.0f;
 
 const int SCREEN_NOISE_SIZE = 16;
 
-const int SECTIONS_X = 10;
-const int SECTIONS_Y = 3;
+const int SECTIONS_X = 8;
+const int SECTIONS_Y = 4;
 
 const float SCALING_X = (SECTIONS_X * 1.0f) / (DATA_WIDTH  * 1.0f);
 const float SCALING_Y = (SECTIONS_Y * 1.0f) / (DATA_HEIGHT * 1.0f);

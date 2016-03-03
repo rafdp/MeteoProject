@@ -4,13 +4,16 @@
 struct FrontInfo_t
 {
 	std::vector<POINT> points_;
-	unsigned int sections_;
+	SectionsType_t sections_;
+
+	int near_;
 
 	void   clear();
 	bool   empty();
 	size_t size();
 	POINT* data();
 	void   AddPoint(int x, int y);
+	void   CalculateNear(const std::vector <FrontInfo_t>& data);
 };
 
 class FrontAnalyzer : NZA_t
