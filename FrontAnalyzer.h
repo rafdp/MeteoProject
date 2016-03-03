@@ -1,14 +1,21 @@
 #pragma once
 #include "includes.h"
 
-struct IntPair_t
+struct FrontInfo_t
 {
-	int x, y;
+	std::vector<POINT> points_;
+	unsigned int sections_;
+
+	void   clear();
+	bool   empty();
+	size_t size();
+	POINT* data();
+	void   AddPoint(int x, int y);
 };
 
 class FrontAnalyzer : NZA_t
 {
-	std::vector<std::vector<IntPair_t>> fronts_;
+	std::vector<FrontInfo_t> fronts_;
 	unsigned char set_[DATA_WIDTH][DATA_HEIGHT];
 	MeteoDataLoader* mdl_;
 	int slice_;
@@ -19,5 +26,5 @@ public:
 	FrontAnalyzer (MeteoDataLoader* mdl, int slice);
 	~FrontAnalyzer ();
 
-	void RecursiveFrontFinder (int x, int y, std::vector<IntPair_t>& current);
+	void RecursiveFrontFinder (int x, int y, FrontInfo_t& current);
 };
