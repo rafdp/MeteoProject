@@ -1,12 +1,26 @@
 #pragma once
 #include "includes.h"
 
+struct FloatPOINT
+{
+	float x, y;
+
+	void Normalize();
+
+	FloatPOINT& operator = (const POINT& that);
+	FloatPOINT& operator += (const FloatPOINT& that);
+};
+
 struct FrontInfo_t
 {
 	std::vector<POINT> points_;
 	SectionsType_t sections_;
 
-	int near_;
+	std::vector<uint32_t> near_;
+
+	int32_t equivalentFront_;
+
+	FrontInfo_t();
 
 	void   clear();
 	bool   empty();
@@ -14,6 +28,9 @@ struct FrontInfo_t
 	POINT* data();
 	void   AddPoint(int x, int y);
 	void   CalculateNear(const std::vector <FrontInfo_t>& data);
+
+	void FindEquivalentFront (const std::vector <FrontInfo_t>& data);
+
 };
 
 class FrontAnalyzer : NZA_t
