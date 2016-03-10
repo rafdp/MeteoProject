@@ -51,6 +51,9 @@
     <ClCompile Include="FrontAnalyzer.cpp">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
+    <ClCompile Include="FrontVisualization.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Builder.h">
@@ -90,6 +93,9 @@
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
     <ClInclude Include="FrontAnalyzer.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="FrontVisualization.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
   </ItemGroup>

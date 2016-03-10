@@ -160,7 +160,7 @@
     <ClCompile Include="Direct3DProcessor.cpp" />
     <ClCompile Include="Exception.cpp" />
     <ClCompile Include="FrontAnalyzer.cpp" />
-    <ClCompile Include="FrontVisualizationcpp.cpp" />
+    <ClCompile Include="FrontVisualization.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MeteoObject.cpp" />
     <ClCompile Include="Object.cpp" />
