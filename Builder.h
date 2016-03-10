@@ -12,3 +12,4 @@
 #include "DataLoader.h"
 #include "MeteoObject.h"
 #include "FrontAnalyzer.h"
+#include "FrontVisualization.h"

@@ -14,6 +14,7 @@ struct FloatPOINT
 struct FrontInfo_t
 {
 	std::vector<POINT> points_;
+	std::vector<uint32_t> skeleton0_;
 	SectionsType_t sections_;
 
 	std::vector<uint32_t> near_;
@@ -27,7 +28,12 @@ struct FrontInfo_t
 	size_t size();
 	POINT* data();
 	void   AddPoint(int x, int y);
-	void   CalculateNear(const std::vector <FrontInfo_t>& data);
+
+	void Process ();
+
+	void FillSkeleton0 ();
+
+	void CalculateNear(const std::vector <FrontInfo_t>& data);
 
 	void FindEquivalentFront (const std::vector <FrontInfo_t>& data);
 
@@ -39,6 +45,7 @@ class FrontAnalyzer : NZA_t
 	unsigned char set_[DATA_WIDTH][DATA_HEIGHT];
 	MeteoDataLoader* mdl_;
 	int slice_;
+	friend class FrontAnalyzer;
 
 public:
 
@@ -47,4 +54,5 @@ public:
 	~FrontAnalyzer ();
 
 	void RecursiveFrontFinder (int x, int y, FrontInfo_t& current);
+
 };

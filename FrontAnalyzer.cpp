@@ -1,6 +1,5 @@
 
 #include "Builder.h"
-#include <complex>
 
 
 FrontAnalyzer::FrontAnalyzer (MeteoDataLoader* mdl, int slice)
@@ -14,8 +13,8 @@ try :
 	if (!mdl_)
 		_EXC_N(NULL_THIS, "Null MeteoDataLoader ptr");
 	FrontInfo_t current;
-	FILE* f = nullptr;
-	fopen_s(&f, "_Front.data", "wb");
+	/*FILE* f = nullptr;
+	fopen_s(&f, "_Front.data", "wb");*/
 
 	for (int x = 0; x < DATA_WIDTH; x++)
 	{
@@ -24,11 +23,14 @@ try :
 			if (set_[x][y]) continue;
 			RecursiveFrontFinder (x, y, current);
 			if (!current.empty ())
-				fronts_.push_back (current);
-			current.clear ();
+			{
+				fronts_.push_back(current);
+				fronts_.back().Process ();
+				current.clear();
+			}
 		}
 	}
-	int allSize = fronts_.size ();
+	/*int allSize = fronts_.size ();
 
 	fwrite(&DATA_WIDTH, sizeof(int), 1, f);
 	fwrite(&DATA_HEIGHT, sizeof(int), 1, f);
@@ -48,7 +50,7 @@ try :
 	}
 	printf("%llu\n", fronts_.size());
 	//while (!GetAsyncKeyState(VK_SPACE));
-	fclose(f);
+	fclose(f);*/
 }
 _END_EXCEPTION_HANDLING(CTOR)
 
@@ -72,6 +74,7 @@ void FrontAnalyzer::ok()
 
 void FrontAnalyzer::RecursiveFrontFinder(int x, int y, FrontInfo_t& current)
 {
+	BEGIN_EXCEPTION_HANDLING
 	const int RANGE = 2;
 
 	if (set_[x][y]) return;
@@ -109,6 +112,7 @@ void FrontAnalyzer::RecursiveFrontFinder(int x, int y, FrontInfo_t& current)
 				RecursiveFrontFinder(x + x_, y + y_, current);
 		}
 	}
+	END_EXCEPTION_HANDLING (RECURSIVE_FRONT_FINDER)
 }
 
 
@@ -135,10 +139,11 @@ FloatPOINT& FloatPOINT::operator+=(const FloatPOINT& that)
 }
 
 FrontInfo_t::FrontInfo_t() :
-	points_(),
-	sections_(),
-	near_(),
-	equivalentFront_(-1)
+	points_          (),
+	skeleton0_       (),
+	sections_        (),
+	near_            (),
+	equivalentFront_ (-1)
 {
 }
 
@@ -170,6 +175,29 @@ void FrontInfo_t::AddPoint(int x, int y)
 	unsigned char bit = int (x*SCALING_X) + 8 * int (y*SCALING_Y);
 	sections_ |= 1 << bit;
 	points_.push_back({ x, y });
+}
+
+void FrontInfo_t::Process()
+{
+	FillSkeleton0();
+}
+
+
+void FrontInfo_t::FillSkeleton0()
+{
+	if (points_.empty()) return;
+	if (!skeleton0_.empty()) skeleton0_.clear();
+	POINT current = points_.front();
+	skeleton0_.push_back(0);
+	for (auto iter = points_.begin() + 1; iter < points_.end(); iter++)
+	{
+		if (abs (current.x - iter->x) <= SKELETON0_RANGE && 
+			abs (current.y - iter->y) <= SKELETON0_RANGE)
+		{
+			current = *iter;
+			skeleton0_.push_back(iter - points_.begin());
+		}
+	}
 }
 
 void FrontInfo_t::CalculateNear(const std::vector<FrontInfo_t>& data)
