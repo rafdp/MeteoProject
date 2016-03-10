@@ -1,11 +1,12 @@
 
 #include "Builder.h"
+#include <complex>
 
 
-FrontAnalyzer::FrontAnalyzer (MeteoDataLoader* mdl, int slice)
+FrontAnalyzer::FrontAnalyzer (MeteoDataLoader* mdl, int slice, FrontAnalyzer* next)
 try :
 	fronts_(),
-	set_   (),
+	set_   (new unsigned char [DATA_WIDTH*DATA_HEIGHT]),
 	mdl_   (mdl),
 	slice_ (slice)
 {
@@ -13,24 +14,23 @@ try :
 	if (!mdl_)
 		_EXC_N(NULL_THIS, "Null MeteoDataLoader ptr");
 	FrontInfo_t current;
-	/*FILE* f = nullptr;
-	fopen_s(&f, "_Front.data", "wb");*/
+	FILE* f = nullptr;
+	fopen_s(&f, "Front.data", "wb");
 
 	for (int x = 0; x < DATA_WIDTH; x++)
 	{
 		for (int y = 0; y < DATA_HEIGHT; y++)
 		{
-			if (set_[x][y]) continue;
+			if (set_[x*DATA_HEIGHT + y]) continue;
 			RecursiveFrontFinder (x, y, current);
-			if (!current.empty ())
+			if (!current.empty())
 			{
 				fronts_.push_back(current);
-				fronts_.back().Process ();
 				current.clear();
 			}
 		}
 	}
-	/*int allSize = fronts_.size ();
+	int allSize = fronts_.size ();
 
 	fwrite(&DATA_WIDTH, sizeof(int), 1, f);
 	fwrite(&DATA_HEIGHT, sizeof(int), 1, f);
@@ -42,15 +42,13 @@ try :
 
 	for (auto currentFront : fronts_)
 	{
-		currentFront.CalculateNear(fronts_);
+		if (next) currentFront.FindEquivalentFront (next->GetFront ());
 		int size = currentFront.size();
 		fwrite (&size, sizeof (int), 1, f);
-		fwrite(&currentFront.sections_, sizeof(SectionsType_t), 1, f);
+		fwrite(&currentFront.equivalentFront_, sizeof(int32_t), 1, f);
 		fwrite(currentFront.data(), sizeof(POINT), size, f);
 	}
-	printf("%llu\n", fronts_.size());
-	//while (!GetAsyncKeyState(VK_SPACE));
-	fclose(f);*/
+	fclose(f);
 }
 _END_EXCEPTION_HANDLING(CTOR)
 
@@ -59,6 +57,13 @@ FrontAnalyzer::~FrontAnalyzer()
 	fronts_.clear();
 	mdl_ = nullptr;
 	slice_ = -1;
+	delete[] set_;
+	set_ = nullptr;
+}
+
+std::vector<FrontInfo_t> & FrontAnalyzer::GetFront()
+{
+	return fronts_;
 }
 
 void FrontAnalyzer::ok()
@@ -74,22 +79,21 @@ void FrontAnalyzer::ok()
 
 void FrontAnalyzer::RecursiveFrontFinder(int x, int y, FrontInfo_t& current)
 {
-	BEGIN_EXCEPTION_HANDLING
 	const int RANGE = 2;
 
-	if (set_[x][y]) return;
+	if (set_[x*DATA_HEIGHT + y]) return;
 	float intensity = *mdl_->Offset(x, y, slice_);
 
 	if (intensity < 0.0001f || intensity > 12.001f)
 	{
-		set_[x][y] = 1;
+		set_[x*DATA_HEIGHT + y] = 1;
 		return;
 	}
 
-	set_[x][y] = 2;
+	set_[x*DATA_HEIGHT + y] = 2;
 
 	char n = 0;
-	if (x >= 1 && ((intensity = *mdl_->Offset(x - 1, y, slice_)) >= 0.0001f && intensity <= 12.001f))
+	/*if (x >= 1 && ((intensity = *mdl_->Offset(x - 1, y, slice_)) >= 0.0001f && intensity <= 12.001f))
 		n++;
 	if (x < DATA_WIDTH - 1 && ((intensity = *mdl_->Offset(x + 1, y, slice_)) >= 0.0001f && intensity <= 12.001f))
 		n++;
@@ -97,7 +101,7 @@ void FrontAnalyzer::RecursiveFrontFinder(int x, int y, FrontInfo_t& current)
 		n++;
 	if (y < DATA_HEIGHT - 1 && ((intensity = *mdl_->Offset(x, y + 1, slice_)) >= 0.0001f && intensity <= 12.001f))
 		n++;
-	if (n == 4) current.AddPoint(x, y);
+	if (n == 4)*/ current.AddPoint(x, y);
 
 	for (int x_ = -RANGE; x_ <= RANGE; x_++)
 	{
@@ -108,17 +112,17 @@ void FrontAnalyzer::RecursiveFrontFinder(int x, int y, FrontInfo_t& current)
 				x + x_ >= 0 && 
 				y + y_ < DATA_HEIGHT &&
 				y + y_ >= 0 &&
-				!set_[x + x_][y + y_])
+				!set_[(x + x_)*DATA_HEIGHT + y + y_])
 				RecursiveFrontFinder(x + x_, y + y_, current);
 		}
 	}
-	END_EXCEPTION_HANDLING (RECURSIVE_FRONT_FINDER)
 }
 
 
 void FloatPOINT::Normalize()
 {
 	float l = sqrt (x*x + y*y);
+	if (fabs(l) < 0.0001f) return;
 
 	x /= l;
 	y /= l;
@@ -139,11 +143,10 @@ FloatPOINT& FloatPOINT::operator+=(const FloatPOINT& that)
 }
 
 FrontInfo_t::FrontInfo_t() :
-	points_          (),
-	skeleton0_       (),
-	sections_        (),
-	near_            (),
-	equivalentFront_ (-1)
+	points_(),
+	sections_(),
+	near_(),
+	equivalentFront_(-1)
 {
 }
 
@@ -177,6 +180,7 @@ void FrontInfo_t::AddPoint(int x, int y)
 	points_.push_back({ x, y });
 }
 
+
 void FrontInfo_t::Process()
 {
 	FillSkeleton0();
@@ -191,8 +195,8 @@ void FrontInfo_t::FillSkeleton0()
 	skeleton0_.push_back(0);
 	for (auto iter = points_.begin() + 1; iter < points_.end(); iter++)
 	{
-		if (abs (current.x - iter->x) <= SKELETON0_RANGE && 
-			abs (current.y - iter->y) <= SKELETON0_RANGE)
+		if (abs(current.x - iter->x) <= SKELETON0_RANGE &&
+			abs(current.y - iter->y) <= SKELETON0_RANGE)
 		{
 			current = *iter;
 			skeleton0_.push_back(iter - points_.begin());
@@ -206,8 +210,10 @@ void FrontInfo_t::CalculateNear(const std::vector<FrontInfo_t>& data)
 	SectionsType_t nearSections = 0;
 	for (char shift = 0; shift < sizeof(SectionsType_t) * 8; shift++)
 	{
+
 		if (sections_ & 1 << shift)
 			nearSections |= 1 << shift;
+		else continue;
 
 		if (shift >= SECTIONS_X)	 
 			nearSections |= 1 << (shift - SECTIONS_X);
@@ -236,7 +242,8 @@ void FrontInfo_t::CalculateNear(const std::vector<FrontInfo_t>& data)
 
 	for (uint32_t i = 0; i < data.size(); i++)
 	{
-		if (data[i].sections_ & nearSections) near_.push_back(i);
+		if (data[i].sections_ & nearSections)
+			near_.push_back(i);
 	}
 
 }
@@ -250,7 +257,7 @@ void FrontInfo_t::FindEquivalentFront(const std::vector<FrontInfo_t>& data)
 
 	POINT current = {};
 	uint32_t size = points_.size();
-	uint32_t notChecked = size;
+	int32_t notChecked = size;
 	bool* checkedPoints = new bool[size];
 	for (int i = 0; i < size; i++) checkedPoints[i] = 0;
 	notChecked--;
@@ -259,13 +266,13 @@ void FrontInfo_t::FindEquivalentFront(const std::vector<FrontInfo_t>& data)
 
 	std::vector<POINT>* directions = new std::vector<POINT> [near_.size()];
 
-	std::vector<FloatPOINT> directionsSummed;
+	std::vector<FloatPOINT> directionsSummed(near_.size(), {0.0f, 0.0f});
 
 	POINT currentDirection = { 0, 0 };
 
 	uint32_t currentPoint = 0;
 
-	bool* possibleFronts = new bool[near_.size()];
+	std::vector<uint32_t> possibleFronts (near_.size(), 0);
 
 	while (notChecked > 0)
 	{
@@ -296,7 +303,7 @@ void FrontInfo_t::FindEquivalentFront(const std::vector<FrontInfo_t>& data)
 			possibleFronts[nearFront] = false;
 
 			distances[nearFront] = 2.0f*FRONT_SHIFT; 
-			directions[nearFront][currentPoint] = { 2.0f*FRONT_SHIFT, 2.0f*FRONT_SHIFT };
+			directions[nearFront].push_back ({ 2*FRONT_SHIFT, 2*FRONT_SHIFT });
 			const FrontInfo_t& compareAgainst = data[near_[nearFront]];
 			for (int pointIndex = 0; pointIndex < compareAgainst.points_.size(); pointIndex++)
 			{
@@ -326,15 +333,27 @@ void FrontInfo_t::FindEquivalentFront(const std::vector<FrontInfo_t>& data)
 			l = directions[nearFront][point];
 			if (l.x > 1.5f*FRONT_SHIFT || l.y > 1.5f*FRONT_SHIFT)
 				continue;
-			possibleFronts[nearFront] = true;
+			possibleFronts[nearFront]++;
 			l.Normalize();
 			directionsSummed[nearFront] += l;
 		}
 		directionsSummed[nearFront].Normalize();
 	}
 
-	//! NEXT -- CHECK WHICH IS THE BEST MATCH
+	uint32_t max = possibleFronts[0];
+	uint32_t index = 0;
 
+	for (uint32_t nearFront = 1; nearFront < near_.size(); nearFront++)
+	{
+		if (possibleFronts[nearFront] > max)
+		{
+			max = possibleFronts[nearFront];
+			index = nearFront;
+		}
+	}
+	
+	if (max != 0 && max >= currentPoint * 0.25f) equivalentFront_ = near_[index];
+	printf("Equivalent front %d\n", equivalentFront_);
 
 	delete[] checkedPoints;
 	checkedPoints = nullptr;
@@ -342,7 +361,5 @@ void FrontInfo_t::FindEquivalentFront(const std::vector<FrontInfo_t>& data)
 	distances = nullptr;
 	delete[] directions;
 	directions = nullptr;
-	delete[] possibleFronts;
-	possibleFronts = nullptr;
 }
 

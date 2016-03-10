@@ -42,7 +42,7 @@ struct FrontInfo_t
 class FrontAnalyzer : NZA_t
 {
 	std::vector<FrontInfo_t> fronts_;
-	unsigned char set_[DATA_WIDTH][DATA_HEIGHT];
+	unsigned char* set_;
 	MeteoDataLoader* mdl_;
 	int slice_;
 	friend class FrontAnalyzer;
@@ -50,8 +50,10 @@ class FrontAnalyzer : NZA_t
 public:
 
 	void ok ();
-	FrontAnalyzer (MeteoDataLoader* mdl, int slice);
+	FrontAnalyzer (MeteoDataLoader* mdl, int slice, FrontAnalyzer* next);
 	~FrontAnalyzer ();
+
+	std::vector<FrontInfo_t>& GetFront();
 
 	void RecursiveFrontFinder (int x, int y, FrontInfo_t& current);
 

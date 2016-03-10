@@ -56,8 +56,13 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	
 	proc_->UpdateConstantBuffer(cb_);
 
-	
-	FrontAnalyzer frontanal(&dl_, 1);
+	FrontAnalyzer frontanal1(&dl_, 1, nullptr);
+
+	FrontAnalyzer frontanal0(&dl_, 0, &frontanal1);
+
+	frontanal0.GetFront()[11].FindEquivalentFront(frontanal1.GetFront());
+	frontanal0.GetFront()[4].FindEquivalentFront(frontanal1.GetFront());
+	frontanal0.GetFront()[1].FindEquivalentFront(frontanal1.GetFront());
 
 	
 }
