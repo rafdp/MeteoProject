@@ -10,6 +10,13 @@ class FrontVisualizer : NZA_t
 	Direct3DObject object_;
 	Direct3DProcessor* proc_;
 
+	void BuildSingleTriangle(MeteoDataLoader* mdl,
+							 std::vector<Vertex_t>& vertices,
+							 std::vector<UINT>& indices,
+							 FrontInfo_t& front,
+							 FrontInfo_t& frontTarget,
+							 char d);
+
 public:
 	FrontVisualizer (FrontAnalyzer* level0,
 				 	 FrontAnalyzer* level1,
@@ -19,5 +26,5 @@ public:
 
 	void ok ();
 
-	void BuildPolygons ();
+	void BuildPolygons (MeteoDataLoader* mdl);
 };

@@ -11,6 +11,10 @@ struct FloatPOINT
 	FloatPOINT& operator += (const FloatPOINT& that);
 };
 
+double Dist(const POINT& x, const POINT& y);
+POINT operator + (const POINT& x, const POINT& y);
+POINT operator / (const POINT& x, int y);
+
 struct FrontInfo_t
 {
 	std::vector<POINT> points_;
@@ -45,6 +49,7 @@ class FrontAnalyzer : NZA_t
 	unsigned char* set_;
 	MeteoDataLoader* mdl_;
 	int slice_;
+
 	friend class FrontAnalyzer;
 
 public:

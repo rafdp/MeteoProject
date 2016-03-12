@@ -1,7 +1,20 @@
 
 #include "Builder.h"
-#include <complex>
 
+
+double Dist (const POINT& x, const POINT& y)
+{
+	return sqrt ((y.x - x.x)*(y.x - x.x) + (y.y - x.y)*(y.y - x.y));
+}
+
+POINT operator + (const POINT& x, const POINT& y)
+{
+	return { x.x + y.x, x.y + y.y };
+}
+POINT operator / (const POINT& x, int y)
+{
+	return { x.x / y, x.y / y };
+}
 
 FrontAnalyzer::FrontAnalyzer (MeteoDataLoader* mdl, int slice, FrontAnalyzer* next)
 try :
