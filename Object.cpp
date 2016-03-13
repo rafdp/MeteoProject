@@ -355,6 +355,11 @@ std::vector<Vertex_t>& Direct3DObject::GetVertices ()
 	return vertices_;
 }
 
+uint64_t Direct3DObject::GetID()
+{
+	return objectId_;
+}
+
 
 void Direct3DCamera::ok ()
 {

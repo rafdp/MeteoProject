@@ -50,12 +50,12 @@ class FrontAnalyzer : NZA_t
 	MeteoDataLoader* mdl_;
 	int slice_;
 
-	friend class FrontAnalyzer;
+	friend class FrontVisualizer;
 
 public:
 
 	void ok ();
-	FrontAnalyzer (MeteoDataLoader* mdl, int slice, FrontAnalyzer* next);
+	FrontAnalyzer (MeteoDataLoader* mdl, int slice);
 	~FrontAnalyzer ();
 
 	std::vector<FrontInfo_t>& GetFront();

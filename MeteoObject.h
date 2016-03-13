@@ -76,4 +76,6 @@ class MeteoObject : NZA_t
 	void PreDraw ();
 
 	void InitRayMarching ();
+
+	void RunPolygonalBuilding();
 };

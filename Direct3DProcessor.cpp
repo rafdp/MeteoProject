@@ -74,6 +74,7 @@ Direct3DProcessor::~Direct3DProcessor ()
 			      i < rasterizerStates_.end ();
 				  i++)
 				 (*i)->Release ();
+
 		for (auto i = toDelete_.begin();
 				  i < toDelete_.end();
 					  i++)

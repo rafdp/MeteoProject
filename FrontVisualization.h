@@ -1,21 +1,34 @@
 #pragma once
 #include "includes.h"
 
+class Incrementator_t
+{
+	int& data;
+public:
+	Incrementator_t(int& data_);
+	~Incrementator_t();
+};
+
 class FrontVisualizer : NZA_t
 {
 	XMMATRIX world_;
 	FrontAnalyzer* level0_;
 	FrontAnalyzer* level1_;
 	int8_t zeroLevel_;
-	Direct3DObject object_;
+	Direct3DObject* object_;
 	Direct3DProcessor* proc_;
+
+	ShaderIndex_t vertS_;
+	ShaderIndex_t pixS_;
+	LayoutIndex_t layout_;
 
 	void BuildSingleTriangle(MeteoDataLoader* mdl,
 							 std::vector<Vertex_t>& vertices,
 							 std::vector<UINT>& indices,
 							 FrontInfo_t& front,
 							 FrontInfo_t& frontTarget,
-							 char d);
+							 int8_t currentLevel,
+							 int8_t d);
 
 public:
 	FrontVisualizer (FrontAnalyzer* level0,

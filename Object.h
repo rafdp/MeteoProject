@@ -161,6 +161,8 @@ public:
 	void ExitCriticalSection ();
 
 	std::vector<Vertex_t>& GetVertices ();
+
+	uint64_t GetID();
 };
 
 

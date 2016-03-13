@@ -56,9 +56,12 @@ int WINAPI WinMain (HINSTANCE hInstance,
 
 		MeteoObject meteo ("Data/COSMOMESH", "Data/Fronts", "Data/H", &camInfo.step, 0.01f, &d3dProc, &cam);
 		cam.Update ();
+
+		meteo.RunPolygonalBuilding();
 		//SetForegroundWindow (window.hwnd ());
 
 
+		printf("Processing\n");
 		d3dProc.ProcessObjects ();
 
 
@@ -68,6 +71,8 @@ int WINAPI WinMain (HINSTANCE hInstance,
 		uint64_t ticksOld = 0;
 		uint64_t ticksNew = GetTickCount64 ();
 		char ticksN = 0;
+
+		printf("Drawing\n");
 		
 		int hour = 0;
 		while (true)
@@ -81,7 +86,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 			}
 			// SCENE PROCESSING
 
-			if (rotate) meteo.Rotate (0.01f);
+			/*if (rotate) meteo.Rotate (0.01f);
 			if (GetAsyncKeyState (VK_SPACE) & 0x8000)
 			{
 				if (!wasPressedSpace)
@@ -90,7 +95,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 					wasPressedSpace = true;
 				}
 			}
-			else wasPressedSpace = false;
+			else wasPressedSpace = false;*/
 			if (GetAsyncKeyState('J') & 0x8000)
 			{
 				while (GetAsyncKeyState('J'));
@@ -117,12 +122,12 @@ int WINAPI WinMain (HINSTANCE hInstance,
 
 				printf ("%.2f fps %f step noise %s          \r", 10000.0f/(ticksNew - ticksOld), camInfo.step, camInfo.noise > 1.0f ? "ON" : "OFF");
 
-				if (10000.0f / (ticksNew - ticksOld) - TARGET_FPS > 10.0f)
+				/*if (10000.0f / (ticksNew - ticksOld) - TARGET_FPS > 10.0f)
 					 camInfo.step -= 0.0005f;
 				else 
 				if (10000.0f / (ticksNew - ticksOld) - TARGET_FPS < -10.0f)
 					camInfo.step += 0.0005f;
-				if (camInfo.step < 0.0f) camInfo.step = 0.0001f;
+				if (camInfo.step < 0.0f) camInfo.step = 0.0001f;*/
 				
 			}
 			ticksN++;

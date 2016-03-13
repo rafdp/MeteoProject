@@ -126,6 +126,8 @@ enum ERRORS
 	E (131, NOT_ENOUGH_SECTIONS)
 	E (132, BAD_ZERO_LEVEL)
 	E (133, RECURSIVE_FRONT_FINDER)
+	E (134, RUN_POLYGONAL_BUILDING)
+	E (135, NULL_PROC)
 };
 
 const wchar_t  APPLICATION_TITLE_W[] = L"MeteoProject";
@@ -180,7 +182,7 @@ const int SECTIONS_Y = 4;
 const float SCALING_X = (SECTIONS_X * 1.0f) / (DATA_WIDTH  * 1.0f);
 const float SCALING_Y = (SECTIONS_Y * 1.0f) / (DATA_HEIGHT * 1.0f);
 const int FRONT_SHIFT = 6;
-const int SKELETON0_RANGE = 2;
+const int SKELETON0_RANGE = 6;
 
 const int NO_EQUIVALENT = -1;
 

@@ -50,21 +50,12 @@ MeteoObject::MeteoObject (std::string cosmomesh,
 	proc_->GetWindowPtr ()->AddCallback (WM_KEYDOWN,     OnChar);
 	sampler_ = proc_->AddSamplerState (D3D11_TEXTURE_ADDRESS_BORDER, {0.0f, 0.0f, 0.0f, 0.0f});
 	sampler2_ = proc_->AddSamplerState (D3D11_TEXTURE_ADDRESS_WRAP);
-	Create3dTexture();
-	InitRayMarching ();
+	dl_.Float2Color();
+	//Create3dTexture();
+	//InitRayMarching ();
 	cb_ = proc_->RegisterConstantBuffer (meteoData_, sizeof(MeteoObjectShaderData_t), 2);
 	
 	proc_->UpdateConstantBuffer(cb_);
-
-	FrontAnalyzer frontanal1(&dl_, 1, nullptr);
-
-	FrontAnalyzer frontanal0(&dl_, 0, &frontanal1);
-
-	frontanal0.GetFront()[11].FindEquivalentFront(frontanal1.GetFront());
-	frontanal0.GetFront()[4].FindEquivalentFront(frontanal1.GetFront());
-	frontanal0.GetFront()[1].FindEquivalentFront(frontanal1.GetFront());
-
-	
 }
 _END_EXCEPTION_HANDLING (CTOR)
 
@@ -411,14 +402,14 @@ void MeteoObject::PreDraw()
 
 	XMVECTOR temp;
 
-	meteoData_->inverseWorld_ = object_->GetWorld ();
+	//meteoData_->inverseWorld_ = object_->GetWorld ();
 
 	proc_->UpdateConstantBuffer(cb_);
 	proc_->SendCBToPS(cb_);
-	proc_->SendSamplerStateToPS(sampler_, 2);
+	/*proc_->SendSamplerStateToPS(sampler_, 2);
 	proc_->SendTextureToPS     (texture_, 2);
 	proc_->SendSamplerStateToPS(sampler2_, 1);
-	proc_->SendTextureToPS     (texture2_, 1);
+	proc_->SendTextureToPS     (texture2_, 1);*/
 
 	END_EXCEPTION_HANDLING(PREDRAW)
 }
@@ -461,6 +452,37 @@ void MeteoObject::InitRayMarching ()
 	proc_->RegisterObject(object_);
 
 	END_EXCEPTION_HANDLING (INIT_RAY_MARCHING)
+}
+
+void MeteoObject::RunPolygonalBuilding()
+{
+	BEGIN_EXCEPTION_HANDLING
+
+	FrontAnalyzer* frontsAnalyzed[SLICES] = {};
+	FrontVisualizer* fv[SLICES - 1] = {};
+
+	frontsAnalyzed[SLICES - 1] = new (_aligned_malloc(sizeof(FrontAnalyzer), 16)) FrontAnalyzer(&dl_, SLICES - 1);
+
+	for (int8_t currentSlice = SLICES - 2; currentSlice >= 0; currentSlice--)
+	{
+		printf("Processing slice %d\n", currentSlice);
+		frontsAnalyzed[currentSlice] = new (_aligned_malloc(sizeof(FrontAnalyzer), 16)) FrontAnalyzer (&dl_, currentSlice);
+		fv[currentSlice] = new FrontVisualizer (frontsAnalyzed[currentSlice],
+								  frontsAnalyzed[currentSlice + 1],
+								  currentSlice,
+								  proc_);
+		fv[currentSlice]->BuildPolygons(&dl_);
+	}
+
+	for (int8_t currentSlice = 0; currentSlice < SLICES; currentSlice++)
+	{
+		_aligned_free(frontsAnalyzed[currentSlice]);
+		printf("Hello %d", currentSlice);
+		if (currentSlice == SLICES - 1) break;
+		delete fv[currentSlice];
+	}
+
+	END_EXCEPTION_HANDLING (RUN_POLYGONAL_BUILDING)
 }
 
 void MeteoObject::MouseClick (int x, int y)

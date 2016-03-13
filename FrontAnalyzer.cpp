@@ -16,19 +16,19 @@ POINT operator / (const POINT& x, int y)
 	return { x.x / y, x.y / y };
 }
 
-FrontAnalyzer::FrontAnalyzer (MeteoDataLoader* mdl, int slice, FrontAnalyzer* next)
+FrontAnalyzer::FrontAnalyzer (MeteoDataLoader* mdl, int slice)
 try :
 	fronts_(),
 	set_   (new unsigned char [DATA_WIDTH*DATA_HEIGHT]),
 	mdl_   (mdl),
 	slice_ (slice)
 {
+	//printf ("Analyzing slice %d\n", slice);
+
 	ZeroMemory(set_, DATA_WIDTH * DATA_HEIGHT);
 	if (!mdl_)
 		_EXC_N(NULL_THIS, "Null MeteoDataLoader ptr");
 	FrontInfo_t current;
-	FILE* f = nullptr;
-	fopen_s(&f, "Front.data", "wb");
 
 	for (int x = 0; x < DATA_WIDTH; x++)
 	{
@@ -38,30 +38,13 @@ try :
 			RecursiveFrontFinder (x, y, current);
 			if (!current.empty())
 			{
+				current.Process();
 				fronts_.push_back(current);
 				current.clear();
 			}
 		}
 	}
-	int allSize = fronts_.size ();
-
-	fwrite(&DATA_WIDTH, sizeof(int), 1, f);
-	fwrite(&DATA_HEIGHT, sizeof(int), 1, f);
-
-	fwrite(&SECTIONS_X, sizeof(int), 1, f);
-	fwrite(&SECTIONS_Y, sizeof(int), 1, f);
-
-	fwrite(&allSize, sizeof(int), 1, f);
-
-	for (auto currentFront : fronts_)
-	{
-		if (next) currentFront.FindEquivalentFront (next->GetFront ());
-		int size = currentFront.size();
-		fwrite (&size, sizeof (int), 1, f);
-		fwrite(&currentFront.equivalentFront_, sizeof(int32_t), 1, f);
-		fwrite(currentFront.data(), sizeof(POINT), size, f);
-	}
-	fclose(f);
+	//printf("Slice %d fronts %llu\n", slice, fronts_.size());
 }
 _END_EXCEPTION_HANDLING(CTOR)
 
@@ -366,7 +349,7 @@ void FrontInfo_t::FindEquivalentFront(const std::vector<FrontInfo_t>& data)
 	}
 	
 	if (max != 0 && max >= currentPoint * 0.25f) equivalentFront_ = near_[index];
-	printf("Equivalent front %d\n", equivalentFront_);
+	//printf("Equivalent front %d\n", equivalentFront_);
 
 	delete[] checkedPoints;
 	checkedPoints = nullptr;

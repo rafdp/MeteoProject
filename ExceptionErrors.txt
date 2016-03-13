@@ -1,7 +1,15 @@
-Exception with error code 36,
-error message: "void __cdecl Direct3DProcessor::Present(void): Error occurred"
-occurred in file: "Direct3DProcessor.cpp" on line 137
+Exception with error code 134,
+error message: "void __cdecl MeteoObject::RunPolygonalBuilding(void): Error occurred"
+occurred in file: "MeteoObject.cpp" on line 483
 caused by:
-Exception with error code 37,
-error message: "D3D: Swap chain present failed (0x887a0005)"
-occurred in file: "Direct3DProcessor.cpp" on line 136
+Exception with error code 56,
+error message: "void __cdecl Direct3DObject::SetupBuffers(struct ID3D11Device *): Error occurred"
+occurred in file: "Object.cpp" on line 145
+caused by:
+Exception with error code 83,
+error message: "void __cdecl Direct3DObject::SetVertexBuffer(struct ID3D11Device *): Error occurred"
+occurred in file: "Object.cpp" on line 282
+caused by:
+Exception with error code 57,
+error message: "D3D: Cannot create empty vertex buffer (obj 1)"
+occurred in file: "Object.cpp" on line 263
