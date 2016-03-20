@@ -182,7 +182,7 @@ const int SECTIONS_Y = 4;
 const float SCALING_X = (SECTIONS_X * 1.0f) / (DATA_WIDTH  * 1.0f);
 const float SCALING_Y = (SECTIONS_Y * 1.0f) / (DATA_HEIGHT * 1.0f);
 const int FRONT_SHIFT = 6;
-const int SKELETON0_RANGE = 6;
+const int SKELETON0_RANGE = 1;
 
 const int NO_EQUIVALENT = -1;
 

@@ -38,12 +38,33 @@ try :
 			RecursiveFrontFinder (x, y, current);
 			if (!current.empty())
 			{
-				current.Process();
+				current.Process (mdl, slice);
 				fronts_.push_back(current);
 				current.clear();
 			}
 		}
 	}
+
+	FILE* f = nullptr;
+	fopen_s(&f, "_Front.data", "wb");
+	int allSize = fronts_.size();
+	fwrite(&DATA_WIDTH, sizeof(int), 1, f);
+	fwrite(&DATA_HEIGHT, sizeof(int), 1, f);
+	fwrite(&SECTIONS_X, sizeof(int), 1, f);
+	fwrite(&SECTIONS_Y, sizeof(int), 1, f);
+	fwrite(&allSize, sizeof(int), 1, f);
+	for (auto currentFront : fronts_)
+	{
+		currentFront.CalculateNear(fronts_);
+		int size = currentFront.skeleton0_.size();
+		fwrite(&size, sizeof(int), 1, f);
+		for (uint32_t iter : currentFront.skeleton0_)
+			fwrite(&currentFront.points_[iter], sizeof(POINT), 1, f);
+	}
+	//printf("%llu\n", fronts_.size());
+	//while (!GetAsyncKeyState(VK_SPACE));
+	fclose(f);
+
 	//printf("Slice %d fronts %llu\n", slice, fronts_.size());
 }
 _END_EXCEPTION_HANDLING(CTOR)
@@ -177,22 +198,36 @@ void FrontInfo_t::AddPoint(int x, int y)
 }
 
 
-void FrontInfo_t::Process()
+void FrontInfo_t::Process(MeteoDataLoader* mdl, int slice)
 {
-	FillSkeleton0();
+	FillSkeleton0(mdl, slice);
 }
 
 
-void FrontInfo_t::FillSkeleton0()
+void FrontInfo_t::FillSkeleton0(MeteoDataLoader* mdl, int slice)
 {
 	if (points_.empty()) return;
 	if (!skeleton0_.empty()) skeleton0_.clear();
-	POINT current = points_.front();
+	POINT current = points_[0];
 	skeleton0_.push_back(0);
 	for (auto iter = points_.begin() + 1; iter < points_.end(); iter++)
 	{
-		if (abs(current.x - iter->x) <= SKELETON0_RANGE &&
-			abs(current.y - iter->y) <= SKELETON0_RANGE)
+		float intensity = 0.0f;
+		char n = 0;
+		if (iter->x >= 1 && ((intensity = *mdl->Offset(iter->x - 1, iter->y, slice)) >= 0.001f && intensity <= 12.001f))
+			n++;
+		if (iter->x < DATA_WIDTH - 1 && ((intensity = *mdl->Offset(iter->x + 1, iter->y, slice)) >= 0.0001f && intensity <= 12.001f))
+			n++;
+		if (iter->y >= 1 && ((intensity = *mdl->Offset(iter->x, iter->y - 1, slice)) >= 0.001f && intensity <= 12.001f))
+			n++;
+		if (iter->y < DATA_HEIGHT - 1 && ((intensity = *mdl->Offset(iter->x, iter->y + 1, slice)) >= 0.0001f && intensity <= 12.001f))
+			n++;
+
+		if ((abs(current.x - iter->x) >= SKELETON0_RANGE &&
+			abs(current.y - iter->y) >= SKELETON0_RANGE &&
+			n == 4) ||
+			(abs(current.x - iter->x) >= 3*SKELETON0_RANGE &&
+			abs(current.y - iter->y) >= 3*SKELETON0_RANGE))
 		{
 			current = *iter;
 			skeleton0_.push_back(iter - points_.begin());

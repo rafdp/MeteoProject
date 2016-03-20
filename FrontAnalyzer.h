@@ -33,9 +33,9 @@ struct FrontInfo_t
 	POINT* data();
 	void   AddPoint(int x, int y);
 
-	void Process ();
+	void Process (MeteoDataLoader* mdl, int slice);
 
-	void FillSkeleton0 ();
+	void FillSkeleton0 (MeteoDataLoader* mdl, int slice);
 
 	void CalculateNear(const std::vector <FrontInfo_t>& data);
 
