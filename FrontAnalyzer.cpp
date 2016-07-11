@@ -2,70 +2,60 @@
 #include "Builder.h"
 
 
-double Dist (const POINT& x, const POINT& y)
-{
-	return sqrt ((y.x - x.x)*(y.x - x.x) + (y.y - x.y)*(y.y - x.y));
-}
-
-POINT operator + (const POINT& x, const POINT& y)
-{
-	return { x.x + y.x, x.y + y.y };
-}
-POINT operator / (const POINT& x, int y)
-{
-	return { x.x / y, x.y / y };
-}
-
 FrontAnalyzer::FrontAnalyzer (MeteoDataLoader* mdl, int slice)
 try :
 	fronts_(),
-	set_   (new unsigned char [DATA_WIDTH*DATA_HEIGHT]),
+	set_   (new unsigned short [DATA_WIDTH*DATA_HEIGHT]),
 	mdl_   (mdl),
-	slice_ (slice)
+	slice_ (slice),
+	toFlush_ ()
 {
 	//printf ("Analyzing slice %d\n", slice);
 
-	ZeroMemory(set_, DATA_WIDTH * DATA_HEIGHT);
+	for (uint32_t i = 0; i < DATA_WIDTH * DATA_HEIGHT; i++)
+		set_[i] = CELL_NOT_CHECKED;
 	if (!mdl_)
 		_EXC_N(NULL_THIS, "Null MeteoDataLoader ptr");
-	FrontInfo_t current;
 
 	for (int x = 0; x < DATA_WIDTH; x++)
 	{
 		for (int y = 0; y < DATA_HEIGHT; y++)
 		{
-			if (set_[x*DATA_HEIGHT + y]) continue;
-			RecursiveFrontFinder (x, y, current);
-			if (!current.empty())
-			{
-				current.Process (mdl, slice);
-				fronts_.push_back(current);
-				current.clear();
-			}
+			if (set_[x*DATA_HEIGHT + y] & COUNT_MASK != CELL_NOT_CHECKED) continue;
+			RecursiveMapAnalyzer (x, y);
 		}
 	}
 
+	FlushBadCells ();
+	FillFronts	(mdl, slice);
+	//FrontThinner ft (&fronts_);
+	//ft.FindSkeleton();
+
+
+	//printf("Slice %d fronts %llu\n", slice, fronts_.size());
+
 	FILE* f = nullptr;
-	fopen_s(&f, "_Front.data", "wb");
-	int allSize = fronts_.size();
+	fopen_s(&f, "Front.data", "wb");
 	fwrite(&DATA_WIDTH, sizeof(int), 1, f);
 	fwrite(&DATA_HEIGHT, sizeof(int), 1, f);
-	fwrite(&SECTIONS_X, sizeof(int), 1, f);
-	fwrite(&SECTIONS_Y, sizeof(int), 1, f);
-	fwrite(&allSize, sizeof(int), 1, f);
-	for (auto currentFront : fronts_)
+	size_t Nfronts_ = fronts_.size();
+	fwrite(&Nfronts_, sizeof(size_t), 1, f);
+	size_t currentSize = 0;
+	for (uint32_t i = 0; i < Nfronts_; i++)
 	{
-		currentFront.CalculateNear(fronts_);
-		int size = currentFront.skeleton0_.size();
-		fwrite(&size, sizeof(int), 1, f);
-		for (uint32_t iter : currentFront.skeleton0_)
-			fwrite(&currentFront.points_[iter], sizeof(POINT), 1, f);
+		currentSize = fronts_[i].skeleton0_.size();
+		printf("SIZE %llu\n", currentSize);
+		//_getch();
+		fwrite(&currentSize, sizeof(size_t), 1, f);
+		for (uint32_t j = 0; j < currentSize; j++)
+		{
+			fwrite(&fronts_[i].points_[fronts_[i].skeleton0_[j]], sizeof(POINT), 1, f);
+		}
+		//fwrite(fronts_[i].skeleton0_.data(), sizeof(POINT), currentSize, f);
 	}
 	//printf("%llu\n", fronts_.size());
 	//while (!GetAsyncKeyState(VK_SPACE));
 	fclose(f);
-
-	//printf("Slice %d fronts %llu\n", slice, fronts_.size());
 }
 _END_EXCEPTION_HANDLING(CTOR)
 
@@ -83,6 +73,35 @@ std::vector<FrontInfo_t> & FrontAnalyzer::GetFront()
 	return fronts_;
 }
 
+int32_t FrontAnalyzer::NeighbourShift(uint8_t neighbour)
+{
+	BEGIN_EXCEPTION_HANDLING
+#define RETURN(name, ret) if (NEIGHBOUR_##name == neighbour) return ret;
+
+	RETURN (TOPLEFT,     -2 * DATA_HEIGHT - 1)
+	RETURN (TOP,         -1)
+	RETURN (TOPRIGHT,    +2 * DATA_HEIGHT - 1)
+	RETURN (LEFT,        -2 * DATA_HEIGHT)
+	RETURN (RIGHT,       +2 * DATA_HEIGHT)
+	RETURN (BOTTOMLEFT,  -2 * DATA_HEIGHT + 1)
+	RETURN (BOTTOM,      +1)
+	RETURN (BOTTOMRIGHT, +2*DATA_HEIGHT + 1)
+
+	_EXC_N (INVALID_NEIGHBOUR_INDEX, "Invalid neighbour index (%x)" _ neighbour)
+
+	return 0;
+END_EXCEPTION_HANDLING(NEIGHBOUR_SHIFT)
+#undef RETURN
+}
+
+uint8_t FrontAnalyzer::InverseNeighbour(uint8_t neighbour)
+{
+	uint8_t result = 0;
+	for (uint8_t i = 0; i < 8; i ++)
+		result |= ((neighbour >> i) & 1) << (8 - i);
+	return result;
+}
+
 void FrontAnalyzer::ok()
 {
 	DEFAULT_OK_BLOCK
@@ -94,31 +113,66 @@ void FrontAnalyzer::ok()
 
 }
 
-void FrontAnalyzer::RecursiveFrontFinder(int x, int y, FrontInfo_t& current)
+void FrontAnalyzer::RecursiveMapAnalyzer (int x, int y)
 {
 	const int RANGE = 2;
 
-	if (set_[x*DATA_HEIGHT + y]) return;
+	if (set_[x*DATA_HEIGHT + y] & COUNT_MASK != CELL_NOT_CHECKED) return;
 	float intensity = *mdl_->Offset(x, y, slice_);
 
 	if (intensity < 0.0001f || intensity > 12.001f)
 	{
-		set_[x*DATA_HEIGHT + y] = 1;
+		set_[x*DATA_HEIGHT + y] = 0;
 		return;
 	}
 
-	set_[x*DATA_HEIGHT + y] = 2;
+	//set_[x*DATA_HEIGHT + y] = 2;
 
-	char n = 0;
-	/*if (x >= 1 && ((intensity = *mdl_->Offset(x - 1, y, slice_)) >= 0.0001f && intensity <= 12.001f))
-		n++;
-	if (x < DATA_WIDTH - 1 && ((intensity = *mdl_->Offset(x + 1, y, slice_)) >= 0.0001f && intensity <= 12.001f))
-		n++;
-	if (y >= 1 && ((intensity = *mdl_->Offset(x, y - 1, slice_)) >= 0.0001f && intensity <= 12.001f))
-		n++;
-	if (y < DATA_HEIGHT - 1 && ((intensity = *mdl_->Offset(x, y + 1, slice_)) >= 0.0001f && intensity <= 12.001f))
-		n++;
-	if (n == 4)*/ current.AddPoint(x, y);
+	//char n = 0;
+	if (x >= 2 && 
+		((intensity = *mdl_->Offset(x - 2, y, slice_)) >= 0.0001f && 
+		intensity <= 12.001f))
+		(set_[x*DATA_HEIGHT + y] |= NEIGHBOUR_LEFT << 8)++;
+	
+	if (x < DATA_WIDTH - 2 && 
+		((intensity = *mdl_->Offset(x + 2, y, slice_)) >= 0.0001f &&
+		intensity <= 12.001f))
+		(set_[x*DATA_HEIGHT + y] |= NEIGHBOUR_RIGHT << 8)++;
+
+	if (y >= 1 && 
+		((intensity = *mdl_->Offset(x, y - 1, slice_)) >= 0.0001f &&
+		intensity <= 12.001f))
+		(set_[x*DATA_HEIGHT + y] |= NEIGHBOUR_TOP << 8)++;
+
+	if (y < DATA_HEIGHT - 1 && 
+		((intensity = *mdl_->Offset(x, y + 1, slice_)) >= 0.0001f &&
+		intensity <= 12.001f))
+		(set_[x*DATA_HEIGHT + y] |= NEIGHBOUR_BOTTOM << 8)++;
+
+	if (y >= 1 && x >= 2 &&  
+		((intensity = *mdl_->Offset(x - 2, y - 1, slice_)) >= 0.0001f && 
+		intensity <= 12.001f))
+		(set_[x*DATA_HEIGHT + y] |= NEIGHBOUR_TOPLEFT << 8)++;
+
+	if (y >= 1 && x <= DATA_WIDTH - 2 && 
+		((intensity = *mdl_->Offset(x + 2, y - 1, slice_)) >= 0.0001f 
+		&& intensity <= 12.001f))
+		(set_[x*DATA_HEIGHT + y] |= NEIGHBOUR_TOPRIGHT << 8)++;
+
+	if (y <= DATA_HEIGHT - 1 && x >= 2 && 
+		((intensity = *mdl_->Offset(x - 2, y + 1, slice_)) >= 0.0001f && 
+			intensity <= 12.001f))
+		(set_[x*DATA_HEIGHT + y] |= NEIGHBOUR_BOTTOMLEFT << 8)++;
+
+	if (y <= DATA_HEIGHT - 1 && x <= DATA_WIDTH - 2 && 
+		((intensity = *mdl_->Offset(x + 2, y + 1, slice_)) >= 0.0001f && 
+			intensity <= 12.001f))
+		(set_[x*DATA_HEIGHT + y] |= NEIGHBOUR_BOTTOMRIGHT << 8)++;
+
+	if (set_[x*DATA_HEIGHT + y] & COUNT_MASK > 2) 
+		toFlush_.push_back (x*DATA_HEIGHT + y);
+
+	//current.AddPoint(x, y, n);
 
 	for (int x_ = -RANGE; x_ <= RANGE; x_++)
 	{
@@ -129,16 +183,90 @@ void FrontAnalyzer::RecursiveFrontFinder(int x, int y, FrontInfo_t& current)
 				x + x_ >= 0 && 
 				y + y_ < DATA_HEIGHT &&
 				y + y_ >= 0 &&
-				!set_[(x + x_)*DATA_HEIGHT + y + y_])
-				RecursiveFrontFinder(x + x_, y + y_, current);
+				set_[x*DATA_HEIGHT + y] & COUNT_MASK != CELL_NOT_CHECKED)
+				RecursiveMapAnalyzer(x + x_, y + y_);
+		}
+	}
+}
+
+void FrontAnalyzer::FlushBadCells ()
+{
+	for (auto iter : toFlush_)
+	{
+#define DELETE_LINKS(name) \
+if ((set_[iter] >> 4) & NEIGHBOUR_##name) \
+	(set_[iter + NeighbourShift(NEIGHBOUR_##name)] &= ~(NEIGHBOUR_##name << 4))--;
+
+		DELETE_LINKS (TOPLEFT)
+		DELETE_LINKS (TOP)
+		DELETE_LINKS (TOPRIGHT)
+		DELETE_LINKS (LEFT)
+		DELETE_LINKS (RIGHT)
+		DELETE_LINKS (BOTTOMLEFT)
+		DELETE_LINKS (BOTTOM)
+		DELETE_LINKS (BOTTOMRIGHT)
+
+#undef DELETE_LINKS
+		set_[iter] = 0;
+	}
+}
+
+void FrontAnalyzer::FillFronts (MeteoDataLoader* mdl, int slice)
+{
+	uint32_t pointIndex = 0;
+	char once = 1;
+	uint32_t pointIndexOld = 0;
+	FrontInfo_t current;
+
+	for (int x = 0; x < DATA_WIDTH; x++)
+	{
+		for (int y = 0; y < DATA_HEIGHT; y++)
+		{
+			pointIndex = x*DATA_HEIGHT + y;
+
+			if (set_[pointIndex] & COUNT_MASK != 1) continue;
+			
+			current.points_.push_back(SPOINT_t(x, y));
+			while (once-- || set_[pointIndex] & COUNT_MASK != 1)
+			{
+				pointIndexOld = pointIndex;
+				pointIndex += NeighbourShift (set_[pointIndex] >> 8);
+				set_[pointIndex] &= InverseNeighbour (set_[pointIndexOld] >> 8);
+				set_[pointIndexOld] = 0;
+				current.AddPoint (pointIndex / DATA_HEIGHT,
+								  pointIndex % DATA_HEIGHT);
+
+			}
+			if (!current.empty())
+			{
+				current.Process(mdl, slice);
+				fronts_.push_back(current);
+				current.clear();
+			}
 		}
 	}
 }
 
 
+double Dist(const SPOINT_t& x, const SPOINT_t& y)
+{
+	return sqrt((y.x - x.x)*(y.x - x.x) + (y.y - x.y)*(y.y - x.y));
+}
+
+SPOINT_t operator + (const SPOINT_t& x, const SPOINT_t& y)
+{
+	return SPOINT_t(x.x + y.x, x.y + y.y);
+}
+
+SPOINT_t operator / (const SPOINT_t& x, int y)
+{
+	return SPOINT_t(x.x / y, x.y / y);
+}
+
+
 void FloatPOINT::Normalize()
 {
-	float l = sqrt (x*x + y*y);
+	float l = sqrt(x*x + y*y);
 	if (fabs(l) < 0.0001f) return;
 
 	x /= l;
@@ -181,18 +309,18 @@ bool FrontInfo_t::empty()
 
 size_t FrontInfo_t::size()
 {
-	return points_.size ();
+	return points_.size();
 }
 
-POINT * FrontInfo_t::data()
+SPOINT_t * FrontInfo_t::data()
 {
 	if (empty()) return nullptr;
-	return points_.data ();
+	return points_.data();
 }
 
 void FrontInfo_t::AddPoint(int x, int y)
 {
-	unsigned char bit = int (x*SCALING_X) + 8 * int (y*SCALING_Y);
+	unsigned char bit = int(x*SCALING_X) + 8 * int(y*SCALING_Y);
 	sections_ |= 1 << bit;
 	points_.push_back({ x, y });
 }
@@ -208,7 +336,7 @@ void FrontInfo_t::FillSkeleton0(MeteoDataLoader* mdl, int slice)
 {
 	if (points_.empty()) return;
 	if (!skeleton0_.empty()) skeleton0_.clear();
-	POINT current = points_[0];
+	SPOINT_t current(points_[0]);
 	skeleton0_.push_back(0);
 	for (auto iter = points_.begin() + 1; iter < points_.end(); iter++)
 	{
@@ -226,8 +354,8 @@ void FrontInfo_t::FillSkeleton0(MeteoDataLoader* mdl, int slice)
 		if ((abs(current.x - iter->x) >= SKELETON0_RANGE &&
 			abs(current.y - iter->y) >= SKELETON0_RANGE &&
 			n == 4) ||
-			(abs(current.x - iter->x) >= 3*SKELETON0_RANGE &&
-			abs(current.y - iter->y) >= 3*SKELETON0_RANGE))
+			(abs(current.x - iter->x) >= 3 * SKELETON0_RANGE &&
+				abs(current.y - iter->y) >= 3 * SKELETON0_RANGE))
 		{
 			current = *iter;
 			skeleton0_.push_back(iter - points_.begin());
@@ -246,7 +374,7 @@ void FrontInfo_t::CalculateNear(const std::vector<FrontInfo_t>& data)
 			nearSections |= 1 << shift;
 		else continue;
 
-		if (shift >= SECTIONS_X)	 
+		if (shift >= SECTIONS_X)
 			nearSections |= 1 << (shift - SECTIONS_X);
 
 		if (shift < SECTIONS_X * (SECTIONS_Y - 1))
@@ -281,12 +409,12 @@ void FrontInfo_t::CalculateNear(const std::vector<FrontInfo_t>& data)
 
 void FrontInfo_t::FindEquivalentFront(const std::vector<FrontInfo_t>& data)
 {
-	CalculateNear (data);
+	CalculateNear(data);
 	equivalentFront_ = -1;
 	if (points_.empty()) return;
 	if (near_.empty()) return;
 
-	POINT current = {};
+	SPOINT_t current;
 	uint32_t size = points_.size();
 	int32_t notChecked = size;
 	bool* checkedPoints = new bool[size];
@@ -295,15 +423,15 @@ void FrontInfo_t::FindEquivalentFront(const std::vector<FrontInfo_t>& data)
 
 	float* distances = new float[near_.size()];
 
-	std::vector<POINT>* directions = new std::vector<POINT> [near_.size()];
+	std::vector<POINT>* directions = new std::vector<POINT>[near_.size()];
 
-	std::vector<FloatPOINT> directionsSummed(near_.size(), {0.0f, 0.0f});
+	std::vector<FloatPOINT> directionsSummed(near_.size(), { 0.0f, 0.0f });
 
 	POINT currentDirection = { 0, 0 };
 
 	uint32_t currentPoint = 0;
 
-	std::vector<uint32_t> possibleFronts (near_.size(), 0);
+	std::vector<uint32_t> possibleFronts(near_.size(), 0);
 
 	while (notChecked > 0)
 	{
@@ -312,7 +440,7 @@ void FrontInfo_t::FindEquivalentFront(const std::vector<FrontInfo_t>& data)
 			if (!checkedPoints[i])
 			{
 				current = points_[i];
-				checkedPoints[i] = true; 
+				checkedPoints[i] = true;
 				notChecked--;
 				break;
 			}
@@ -324,7 +452,7 @@ void FrontInfo_t::FindEquivalentFront(const std::vector<FrontInfo_t>& data)
 				abs(points_[i].y - current.y) <= FRONT_SHIFT)
 			{
 
-				checkedPoints[i] = true; 
+				checkedPoints[i] = true;
 				notChecked--;
 			}
 		}
@@ -333,15 +461,15 @@ void FrontInfo_t::FindEquivalentFront(const std::vector<FrontInfo_t>& data)
 		{
 			possibleFronts[nearFront] = false;
 
-			distances[nearFront] = 2.0f*FRONT_SHIFT; 
-			directions[nearFront].push_back ({ 2*FRONT_SHIFT, 2*FRONT_SHIFT });
+			distances[nearFront] = 2.0f*FRONT_SHIFT;
+			directions[nearFront].push_back({ 2 * FRONT_SHIFT, 2 * FRONT_SHIFT });
 			const FrontInfo_t& compareAgainst = data[near_[nearFront]];
 			for (int pointIndex = 0; pointIndex < compareAgainst.points_.size(); pointIndex++)
 			{
 				int16_t dx = compareAgainst.points_[pointIndex].x - current.x;
 				int16_t dy = compareAgainst.points_[pointIndex].y - current.y;
 				float currentDistance = 0.0f;
-				if (abs (dx) <= FRONT_SHIFT && abs(dy) <= FRONT_SHIFT)
+				if (abs(dx) <= FRONT_SHIFT && abs(dy) <= FRONT_SHIFT)
 				{
 					currentDistance = sqrt(dx*dx + dy*dy);
 					if (distances[nearFront] > currentDistance)
@@ -382,7 +510,7 @@ void FrontInfo_t::FindEquivalentFront(const std::vector<FrontInfo_t>& data)
 			index = nearFront;
 		}
 	}
-	
+
 	if (max != 0 && max >= currentPoint * 0.25f) equivalentFront_ = near_[index];
 	//printf("Equivalent front %d\n", equivalentFront_);
 
@@ -394,3 +522,168 @@ void FrontInfo_t::FindEquivalentFront(const std::vector<FrontInfo_t>& data)
 	directions = nullptr;
 }
 
+SPOINT_t::SPOINT_t() :
+	x(),
+	y()
+{
+
+}
+
+SPOINT_t::SPOINT_t(int x_, int y_) :
+	x(x_),
+	y(y_)
+{}
+
+/*
+void FrontAnalyzer::SortFronts()
+{
+	BEGIN_EXCEPTION_HANDLING
+
+	static bool done[DATA_WIDTH][DATA_HEIGHT] = {};
+
+	for (auto currentFront = fronts_.begin();
+		currentFront < fronts_.end();
+		currentFront++)
+	{
+		POINT_N start = {};
+		bool foundStart = false;
+		const float THRESHOLD = 60.0f * center;
+		float k = 1.0f;
+
+		{
+			char z = 0;
+			for (POINT_N currentPoint : currentFront->points_)
+			{
+
+				if (currentPoint.n == 4 &&
+					frontPos_[currentPoint.x * DATA_HEIGHT + currentPoint.y] > k * THRESHOLD)
+				{
+					if (z < 4)
+					{
+						z++; continue;
+					}
+					start = currentPoint;
+					foundStart = true;
+					break;
+				}
+			}
+		}
+
+		if (!foundStart) continue;
+
+		float currentIntensity = frontPos_[start.x * DATA_HEIGHT + start.y];
+		POINT currentPoint = { start.x, start.y };
+
+		bool next = true;
+		if (currentIntensity < k * THRESHOLD)
+			_EXC_N(INVALID_INTENSITY_THRESHOLD, "Invalid intensity found (%d %f)" _ start.n _ currentIntensity)
+			float grad = 0.0f;
+		uint32_t nextIndex = 0;
+		float tempIntensity = 0;
+		const char SUM = 10;
+		const char LAST_TOP = 1,
+			LAST_BOTTOM = SUM - LAST_TOP,
+			LAST_LEFT = 2,
+			LAST_RIGHT = SUM - LAST_LEFT,
+			LAST_LEFT_TOP = 3,
+			LAST_RIGHT_BOTTOM = SUM - LAST_LEFT_TOP,
+			LAST_RIGHT_TOP = 4,
+			LAST_LEFT_BOTTOM = SUM - LAST_RIGHT_TOP;
+		char lastPos = 0;
+		char newLastPos = 0;
+
+		bool foundFirstEnd = false;
+		bool swapDir = false;
+		char firstLastPos = 0;
+		bool once = false;
+
+		while (true)
+		{
+			grad = -10000.0f;
+			currentFront->skeleton1_.push_back(currentPoint);
+			next = false;
+
+#define OPERATION(ifParam, dx, dy, lastPos1) \
+if (lastPos != LAST_##lastPos1 && currentPoint. ifParam && !done[currentPoint.x + (dx)][currentPoint.y + (dy)]) \
+{ \
+	tempIntensity = frontPos_[(currentPoint.x + (dx)) * DATA_HEIGHT + currentPoint.y  + (dy)]; \
+	/*printf("Result: %d, %f, %f\n", lastPos - LAST_##lastPos1, tempIntensity, tempIntensity-currentIntensity); *
+	if (tempIntensity - currentIntensity > grad && tempIntensity > k * THRESHOLD) \
+	{ \
+		nextIndex = (currentPoint.x + (dx)) * DATA_HEIGHT + currentPoint.y + (dy); \
+		grad = tempIntensity - currentIntensity; \
+		next = true; \
+		newLastPos = 6 - LAST_##lastPos1; \
+		done[currentPoint.x + (dx)][currentPoint.y + (dy)] = true; \
+	} \
+} 
+			/*printf("Before %s\n",
+			lastPos == LAST_TOP ? "TOP" : (lastPos == LAST_BOTTOM ? "BOTTOM" : (lastPos == LAST_LEFT ? "LEFT" : "RIGHT")));*
+			OPERATION(x > 0, -1, 0, LEFT)
+				OPERATION(x < DATA_WIDTH - 1, +1, 0, RIGHT)
+				OPERATION(y > 0, 0, -1, TOP)
+				OPERATION(y < DATA_HEIGHT - 1, 0, +1, BOTTOM)
+
+				OPERATION(x > 0 && currentPoint.y > 0, -1, -1, LEFT_TOP)
+				OPERATION(x > 0 && currentPoint.y < DATA_HEIGHT - 1, -1, +1, LEFT_BOTTOM)
+				OPERATION(x < DATA_WIDTH - 1 && currentPoint.y > 0, +1, -1, RIGHT_TOP)
+				OPERATION(x < DATA_WIDTH - 1 && currentPoint.y < DATA_HEIGHT - 1, +1, +1, RIGHT_BOTTOM)
+
+				lastPos = newLastPos;
+			/*if (next)
+			printf("Next %s, grad %f, dir swap %d, %d, %d\n",
+			lastPos == LAST_TOP ? "TOP" : (lastPos == LAST_BOTTOM ? "BOTTOM" : (lastPos == LAST_LEFT ? "LEFT" : "RIGHT")),
+			grad, swapDir, currentPoint.x, currentPoint.y);
+			else
+			printf("No next\n");*
+
+			if (!once && !next)
+			{
+				currentFront->skeleton1_.clear();
+				break;
+			}
+			//_EXC_N (FOUND_ISLE, "Found single pixel, no near pixel passes threshold (%f)" _ currentIntensity)
+			else
+				if (!once)
+				{
+					firstLastPos = lastPos;
+					once = true;
+				}
+
+			if (!next && foundFirstEnd)
+			{
+				if (k > 0.3f && (start.x - currentPoint.x) * (start.x - currentPoint.x) + (start.y - currentPoint.y)*(start.y - currentPoint.y) < 100.0f)
+				{
+					k *= 0.9f;
+					continue;
+				}
+				else
+				{
+					printf("NO NEXT %f\n", currentIntensity);
+					break;
+				}
+			}
+
+			if (!next && !foundFirstEnd)
+			{
+				next = true;
+				lastPos = 6 - firstLastPos;
+				size_t size = currentFront->skeleton1_.size();
+				for (uint32_t i = 0; i < size / 2; i++)
+					std::swap(currentFront->skeleton1_[i],
+						currentFront->skeleton1_[size - i - 1]);
+				currentPoint = { start.x, start.y };
+				currentIntensity = frontPos_[currentPoint.x * DATA_HEIGHT + currentPoint.y];
+				foundFirstEnd = true;
+			}
+			else
+			{
+				currentPoint = { static_cast<LONG> (nextIndex / DATA_HEIGHT),
+					static_cast<LONG> (nextIndex % DATA_HEIGHT) };
+				currentIntensity = frontPos_[nextIndex];
+				if (k < 0.9f) k *= 1.1f;
+			}
+
+#undef OPERATION
+		}
+}*/

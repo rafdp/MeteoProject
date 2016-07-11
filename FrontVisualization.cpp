@@ -89,7 +89,7 @@ void FrontVisualizer::BuildSingleTriangle (MeteoDataLoader* mdl,
 		if (nearD > SKELETON0_RANGE*2.0) continue;
 
 
-		POINT finalP = (FP0(current) + FP0(nearPointIndex0)) / 2;
+		SPOINT_t finalP = (FP0(current) + FP0(nearPointIndex0)) / 2;
 
 		uint32_t size1 = frontTarget.skeleton0_.size();
 

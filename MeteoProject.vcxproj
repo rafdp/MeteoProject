@@ -160,6 +160,9 @@
     <ClCompile Include="Direct3DProcessor.cpp" />
     <ClCompile Include="Exception.cpp" />
     <ClCompile Include="FrontAnalyzer.cpp" />
+    <ClCompile Include="FrontThinner.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="FrontVisualization.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MeteoObject.cpp" />
@@ -176,6 +179,7 @@
     <ClInclude Include="Direct3DProcessor.h" />
     <ClInclude Include="Exception.h" />
     <ClInclude Include="FrontAnalyzer.h" />
+    <ClInclude Include="FrontThinner.h" />
     <ClInclude Include="FrontVisualization.h" />
     <ClInclude Include="includes.h" />
     <ClInclude Include="MeteoObject.h" />

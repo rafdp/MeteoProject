@@ -1,6 +1,7 @@
 #pragma once
 #include "includes.h"
 
+
 struct FloatPOINT
 {
 	float x, y;
@@ -11,14 +12,25 @@ struct FloatPOINT
 	FloatPOINT& operator += (const FloatPOINT& that);
 };
 
-double Dist(const POINT& x, const POINT& y);
-POINT operator + (const POINT& x, const POINT& y);
-POINT operator / (const POINT& x, int y);
+struct SPOINT_t
+{
+public:
+	int x, y;
+
+	SPOINT_t ();
+	SPOINT_t (int x, int y);
+
+};
+
+double Dist(const SPOINT_t& x, const SPOINT_t& y);
+SPOINT_t operator + (const SPOINT_t& x, const SPOINT_t& y);
+SPOINT_t operator / (const SPOINT_t& x, int y);
 
 struct FrontInfo_t
 {
-	std::vector<POINT> points_;
+	std::vector<SPOINT_t> points_;
 	std::vector<uint32_t> skeleton0_;
+	std::vector<POINT> skeleton1_;
 	SectionsType_t sections_;
 
 	std::vector<uint32_t> near_;
@@ -30,27 +42,32 @@ struct FrontInfo_t
 	void   clear();
 	bool   empty();
 	size_t size();
-	POINT* data();
+	SPOINT_t* data();
 	void   AddPoint(int x, int y);
 
-	void Process (MeteoDataLoader* mdl, int slice);
+	void Process(MeteoDataLoader* mdl, int slice);
 
-	void FillSkeleton0 (MeteoDataLoader* mdl, int slice);
+	void FillSkeleton0(MeteoDataLoader* mdl, int slice);
 
 	void CalculateNear(const std::vector <FrontInfo_t>& data);
 
-	void FindEquivalentFront (const std::vector <FrontInfo_t>& data);
+	void FindEquivalentFront(const std::vector <FrontInfo_t>& data);
 
 };
 
 class FrontAnalyzer : NZA_t
 {
 	std::vector<FrontInfo_t> fronts_;
-	unsigned char* set_;
+	unsigned short* set_;
 	MeteoDataLoader* mdl_;
 	int slice_;
+	std::vector<uint32_t> toFlush_;
 
 	friend class FrontVisualizer;
+
+	int32_t NeighbourShift (uint8_t neighbour);
+
+	uint8_t InverseNeighbour (uint8_t neighbour);
 
 public:
 
@@ -60,6 +77,12 @@ public:
 
 	std::vector<FrontInfo_t>& GetFront();
 
-	void RecursiveFrontFinder (int x, int y, FrontInfo_t& current);
+	void RecursiveMapAnalyzer (int x, int y);
+
+	void FlushBadCells ();
+
+	void FillFronts (MeteoDataLoader* mdl, int slice);
+
+	//void SortFronts ();
 
 };

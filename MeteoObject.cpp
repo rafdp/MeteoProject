@@ -477,7 +477,6 @@ void MeteoObject::RunPolygonalBuilding()
 	for (int8_t currentSlice = 0; currentSlice < SLICES; currentSlice++)
 	{
 		_aligned_free(frontsAnalyzed[currentSlice]);
-		printf("Hello %d", currentSlice);
 		if (currentSlice == SLICES - 1) break;
 		delete fv[currentSlice];
 	}

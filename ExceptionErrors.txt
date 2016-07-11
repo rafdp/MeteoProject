@@ -1,15 +1,11 @@
 Exception with error code 134,
 error message: "void __cdecl MeteoObject::RunPolygonalBuilding(void): Error occurred"
-occurred in file: "MeteoObject.cpp" on line 483
+occurred in file: "MeteoObject.cpp" on line 485
 caused by:
-Exception with error code 56,
-error message: "void __cdecl Direct3DObject::SetupBuffers(struct ID3D11Device *): Error occurred"
-occurred in file: "Object.cpp" on line 145
+Exception with error code 15,
+error message: "__cdecl FrontAnalyzer::FrontAnalyzer(class MeteoDataLoader *,int): Error occurred"
+occurred in file: "FrontAnalyzer.cpp" on line 39
 caused by:
-Exception with error code 83,
-error message: "void __cdecl Direct3DObject::SetVertexBuffer(struct ID3D11Device *): Error occurred"
-occurred in file: "Object.cpp" on line 282
-caused by:
-Exception with error code 57,
-error message: "D3D: Cannot create empty vertex buffer (obj 1)"
-occurred in file: "Object.cpp" on line 263
+Exception with error code 17,
+error message: "void __cdecl FrontThinner::FindSkeleton(void): .std::bad_alloc. "
+occurred in file: "FrontThinner.cpp" on line 501

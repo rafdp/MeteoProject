@@ -9,6 +9,8 @@ public:
 	~Incrementator_t();
 };
 
+struct FrontInfo_t;
+
 class FrontVisualizer : NZA_t
 {
 	XMMATRIX world_;

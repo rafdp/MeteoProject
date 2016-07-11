@@ -11,5 +11,6 @@
 #include "Direct3DProcessor.h"
 #include "DataLoader.h"
 #include "MeteoObject.h"
+//#include "FrontThinner.h"
 #include "FrontAnalyzer.h"
 #include "FrontVisualization.h"
