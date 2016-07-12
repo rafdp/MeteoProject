@@ -1,6 +1,12 @@
 
 #include "Builder.h"
 
+#define LOWCHAR(x) (uint8_t ((x) & COUNT_MASK))
+#define HICHAR(x) (uint8_t (((x) & NEIGHBOURS_MASK) >> 8))
+
+#define NEED_DEBUG 0
+#define DEBUG_X 433
+#define DEBUG_Y 225
 
 FrontAnalyzer::FrontAnalyzer (MeteoDataLoader* mdl, int slice)
 try :
@@ -10,21 +16,25 @@ try :
 	slice_ (slice),
 	toFlush_ ()
 {
-	//printf ("Analyzing slice %d\n", slice);
+	printf ("Analyzing slice %d\n", slice);
 
 	for (uint32_t i = 0; i < DATA_WIDTH * DATA_HEIGHT; i++)
-		set_[i] = CELL_NOT_CHECKED;
+		set_[i] = static_cast<short> (CELL_NOT_CHECKED);
 	if (!mdl_)
 		_EXC_N(NULL_THIS, "Null MeteoDataLoader ptr");
+
+	printf("Analyzing slice %d\n", slice);
 
 	for (int x = 0; x < DATA_WIDTH; x++)
 	{
 		for (int y = 0; y < DATA_HEIGHT; y++)
 		{
-			if (set_[x*DATA_HEIGHT + y] & COUNT_MASK != CELL_NOT_CHECKED) continue;
+			if (LOWCHAR (set_[x*DATA_HEIGHT + y]) != CELL_NOT_CHECKED) continue;
 			RecursiveMapAnalyzer (x, y);
 		}
 	}
+
+	printf("Analyzing slice %d\n", slice);
 
 	FlushBadCells ();
 	FillFronts	(mdl, slice);
@@ -33,9 +43,9 @@ try :
 
 
 	//printf("Slice %d fronts %llu\n", slice, fronts_.size());
-
+	if (slice != 0) return;
 	FILE* f = nullptr;
-	fopen_s(&f, "Front.data", "wb");
+	fopen_s(&f, "Data/Front.data", "wb");
 	fwrite(&DATA_WIDTH, sizeof(int), 1, f);
 	fwrite(&DATA_HEIGHT, sizeof(int), 1, f);
 	size_t Nfronts_ = fronts_.size();
@@ -43,13 +53,13 @@ try :
 	size_t currentSize = 0;
 	for (uint32_t i = 0; i < Nfronts_; i++)
 	{
-		currentSize = fronts_[i].skeleton0_.size();
-		printf("SIZE %llu\n", currentSize);
-		//_getch();
+		currentSize = fronts_[i].points_.size();
+		//printf("SIZE %llu\n", currentSize);
+
 		fwrite(&currentSize, sizeof(size_t), 1, f);
 		for (uint32_t j = 0; j < currentSize; j++)
 		{
-			fwrite(&fronts_[i].points_[fronts_[i].skeleton0_[j]], sizeof(POINT), 1, f);
+			fwrite(&fronts_[i].points_[j], sizeof(POINT), 1, f);
 		}
 		//fwrite(fronts_[i].skeleton0_.data(), sizeof(POINT), currentSize, f);
 	}
@@ -76,18 +86,26 @@ std::vector<FrontInfo_t> & FrontAnalyzer::GetFront()
 int32_t FrontAnalyzer::NeighbourShift(uint8_t neighbour)
 {
 	BEGIN_EXCEPTION_HANDLING
-#define RETURN(name, ret) if (NEIGHBOUR_##name == neighbour) return ret;
+#define RETURN(name, ret) if (NEIGHBOUR_##name == neighbour) return ret; else
 
-	RETURN (TOPLEFT,     -2 * DATA_HEIGHT - 1)
+	RETURN (TOPLEFT,     -1 * DATA_HEIGHT - 1)
 	RETURN (TOP,         -1)
-	RETURN (TOPRIGHT,    +2 * DATA_HEIGHT - 1)
-	RETURN (LEFT,        -2 * DATA_HEIGHT)
-	RETURN (RIGHT,       +2 * DATA_HEIGHT)
-	RETURN (BOTTOMLEFT,  -2 * DATA_HEIGHT + 1)
+	RETURN (TOPRIGHT,    +1 * DATA_HEIGHT - 1)
+	RETURN (LEFT,        -1 * DATA_HEIGHT)
+	RETURN (RIGHT,       +1 * DATA_HEIGHT)
+	RETURN (BOTTOMLEFT,  -1 * DATA_HEIGHT + 1)
 	RETURN (BOTTOM,      +1)
-	RETURN (BOTTOMRIGHT, +2*DATA_HEIGHT + 1)
-
-	_EXC_N (INVALID_NEIGHBOUR_INDEX, "Invalid neighbour index (%x)" _ neighbour)
+	RETURN (BOTTOMRIGHT, +1*DATA_HEIGHT + 1)
+		
+	_EXC_N (INVALID_NEIGHBOUR_INDEX, "Invalid neighbour index (0b%d%d%d%d%d%d%d%d)" _ 
+			neighbour & 0b10000000 ? 1 : 0 _ 
+			neighbour & 0b01000000 ? 1 : 0 _
+			neighbour & 0b00100000 ? 1 : 0 _
+			neighbour & 0b00010000 ? 1 : 0 _
+			neighbour & 0b00001000 ? 1 : 0 _
+			neighbour & 0b00000100 ? 1 : 0 _
+			neighbour & 0b00000010 ? 1 : 0 _
+			neighbour & 0b00000001 ? 1 : 0)
 
 	return 0;
 END_EXCEPTION_HANDLING(NEIGHBOUR_SHIFT)
@@ -98,7 +116,7 @@ uint8_t FrontAnalyzer::InverseNeighbour(uint8_t neighbour)
 {
 	uint8_t result = 0;
 	for (uint8_t i = 0; i < 8; i ++)
-		result |= ((neighbour >> i) & 1) << (8 - i);
+		result |= ((neighbour >> i) & 1) << (7 - i);
 	return result;
 }
 
@@ -116,8 +134,8 @@ void FrontAnalyzer::ok()
 void FrontAnalyzer::RecursiveMapAnalyzer (int x, int y)
 {
 	const int RANGE = 2;
-
-	if (set_[x*DATA_HEIGHT + y] & COUNT_MASK != CELL_NOT_CHECKED) return;
+	if (LOWCHAR(set_[x*DATA_HEIGHT + y]) != CELL_NOT_CHECKED) return;
+	set_[x*DATA_HEIGHT + y] &= NEIGHBOURS_MASK;
 	float intensity = *mdl_->Offset(x, y, slice_);
 
 	if (intensity < 0.0001f || intensity > 12.001f)
@@ -129,13 +147,18 @@ void FrontAnalyzer::RecursiveMapAnalyzer (int x, int y)
 	//set_[x*DATA_HEIGHT + y] = 2;
 
 	//char n = 0;
-	if (x >= 2 && 
-		((intensity = *mdl_->Offset(x - 2, y, slice_)) >= 0.0001f && 
+#if (NEED_DEBUG > 0)
+	if (x == DEBUG_X && y == DEBUG_Y)
+		printf("RMA before %x\n", set_[x*DATA_HEIGHT + y]);
+#endif
+
+	if (x >= 1 && 
+		((intensity = *mdl_->Offset(x - 1, y, slice_)) >= 0.0001f && 
 		intensity <= 12.001f))
 		(set_[x*DATA_HEIGHT + y] |= NEIGHBOUR_LEFT << 8)++;
 	
-	if (x < DATA_WIDTH - 2 && 
-		((intensity = *mdl_->Offset(x + 2, y, slice_)) >= 0.0001f &&
+	if (x < DATA_WIDTH - 1 && 
+		((intensity = *mdl_->Offset(x + 1, y, slice_)) >= 0.0001f &&
 		intensity <= 12.001f))
 		(set_[x*DATA_HEIGHT + y] |= NEIGHBOUR_RIGHT << 8)++;
 
@@ -149,29 +172,33 @@ void FrontAnalyzer::RecursiveMapAnalyzer (int x, int y)
 		intensity <= 12.001f))
 		(set_[x*DATA_HEIGHT + y] |= NEIGHBOUR_BOTTOM << 8)++;
 
-	if (y >= 1 && x >= 2 &&  
-		((intensity = *mdl_->Offset(x - 2, y - 1, slice_)) >= 0.0001f && 
+	if (y >= 1 && x >= 1 &&  
+		((intensity = *mdl_->Offset(x - 1, y - 1, slice_)) >= 0.0001f && 
 		intensity <= 12.001f))
 		(set_[x*DATA_HEIGHT + y] |= NEIGHBOUR_TOPLEFT << 8)++;
 
-	if (y >= 1 && x <= DATA_WIDTH - 2 && 
-		((intensity = *mdl_->Offset(x + 2, y - 1, slice_)) >= 0.0001f 
+	if (y >= 1 && x <= DATA_WIDTH - 1 && 
+		((intensity = *mdl_->Offset(x + 1, y - 1, slice_)) >= 0.0001f 
 		&& intensity <= 12.001f))
 		(set_[x*DATA_HEIGHT + y] |= NEIGHBOUR_TOPRIGHT << 8)++;
 
-	if (y <= DATA_HEIGHT - 1 && x >= 2 && 
-		((intensity = *mdl_->Offset(x - 2, y + 1, slice_)) >= 0.0001f && 
+	if (y <= DATA_HEIGHT - 1 && x >= 1 && 
+		((intensity = *mdl_->Offset(x - 1, y + 1, slice_)) >= 0.0001f && 
 			intensity <= 12.001f))
 		(set_[x*DATA_HEIGHT + y] |= NEIGHBOUR_BOTTOMLEFT << 8)++;
 
-	if (y <= DATA_HEIGHT - 1 && x <= DATA_WIDTH - 2 && 
-		((intensity = *mdl_->Offset(x + 2, y + 1, slice_)) >= 0.0001f && 
+	if (y <= DATA_HEIGHT - 1 && x <= DATA_WIDTH - 1 && 
+		((intensity = *mdl_->Offset(x + 1, y + 1, slice_)) >= 0.0001f && 
 			intensity <= 12.001f))
 		(set_[x*DATA_HEIGHT + y] |= NEIGHBOUR_BOTTOMRIGHT << 8)++;
 
-	if (set_[x*DATA_HEIGHT + y] & COUNT_MASK > 2) 
+	if (LOWCHAR(set_[x*DATA_HEIGHT + y]) > 2)
 		toFlush_.push_back (x*DATA_HEIGHT + y);
 
+#if (NEED_DEBUG > 0)
+	if (x == DEBUG_X && y == DEBUG_Y)
+		printf("RMA after %x\n", set_[x*DATA_HEIGHT + y]);
+#endif
 	//current.AddPoint(x, y, n);
 
 	for (int x_ = -RANGE; x_ <= RANGE; x_++)
@@ -183,7 +210,7 @@ void FrontAnalyzer::RecursiveMapAnalyzer (int x, int y)
 				x + x_ >= 0 && 
 				y + y_ < DATA_HEIGHT &&
 				y + y_ >= 0 &&
-				set_[x*DATA_HEIGHT + y] & COUNT_MASK != CELL_NOT_CHECKED)
+				LOWCHAR(set_[x*DATA_HEIGHT + y]) != CELL_NOT_CHECKED)
 				RecursiveMapAnalyzer(x + x_, y + y_);
 		}
 	}
@@ -191,12 +218,27 @@ void FrontAnalyzer::RecursiveMapAnalyzer (int x, int y)
 
 void FrontAnalyzer::FlushBadCells ()
 {
-	for (auto iter : toFlush_)
-	{
-#define DELETE_LINKS(name) \
-if ((set_[iter] >> 4) & NEIGHBOUR_##name) \
-	(set_[iter + NeighbourShift(NEIGHBOUR_##name)] &= ~(NEIGHBOUR_##name << 4))--;
+	BEGIN_EXCEPTION_HANDLING
 
+		for (auto iter : toFlush_)
+		{
+#if (NEED_DEBUG > 0)
+
+#define DELETE_LINKS(name) \
+if (iter + NeighbourShift(NEIGHBOUR_##name) == DEBUG_X*DATA_HEIGHT + DEBUG_Y) \
+		printf ("FLUSH before %x\n", set_[iter + NeighbourShift(NEIGHBOUR_##name)]); \
+if (HICHAR (set_[iter] >> 8) & NEIGHBOUR_##name) \
+	(set_[iter + NeighbourShift(NEIGHBOUR_##name)] &= ~(InverseNeighbour (NEIGHBOUR_##name) << 8))--; \
+if (iter + NeighbourShift(NEIGHBOUR_##name) == DEBUG_X*DATA_HEIGHT + DEBUG_Y) \
+		printf ("FLUSH after %x\n", set_[iter + NeighbourShift(NEIGHBOUR_##name)]);
+
+#else
+
+#define DELETE_LINKS(name) \
+if (HICHAR (set_[iter] >> 8) & NEIGHBOUR_##name) \
+	(set_[iter + NeighbourShift(NEIGHBOUR_##name)] &= ~(InverseNeighbour (NEIGHBOUR_##name) << 8))--; 
+
+#endif
 		DELETE_LINKS (TOPLEFT)
 		DELETE_LINKS (TOP)
 		DELETE_LINKS (TOPRIGHT)
@@ -209,12 +251,14 @@ if ((set_[iter] >> 4) & NEIGHBOUR_##name) \
 #undef DELETE_LINKS
 		set_[iter] = 0;
 	}
+	END_EXCEPTION_HANDLING (FLUSH_BAD_CELLS)
 }
 
 void FrontAnalyzer::FillFronts (MeteoDataLoader* mdl, int slice)
 {
+	BEGIN_EXCEPTION_HANDLING
 	uint32_t pointIndex = 0;
-	char once = 1;
+	uint32_t loop = 0;
 	uint32_t pointIndexOld = 0;
 	FrontInfo_t current;
 
@@ -224,20 +268,49 @@ void FrontAnalyzer::FillFronts (MeteoDataLoader* mdl, int slice)
 		{
 			pointIndex = x*DATA_HEIGHT + y;
 
-			if (set_[pointIndex] & COUNT_MASK != 1) continue;
+			if (LOWCHAR(set_[pointIndex]) != 1) continue;
 			
 			current.points_.push_back(SPOINT_t(x, y));
-			while (once-- || set_[pointIndex] & COUNT_MASK != 1)
+			loop = 0;
+			while (!loop || LOWCHAR(set_[pointIndex]) == 2)
 			{
+				loop++;
+#if (NEED_DEBUG > 0)
+				if (pointIndex == DEBUG_X*DATA_HEIGHT + DEBUG_Y)
+					printf("Fill fronts loop%d %x %d %d\n", 
+						   loop, 
+						HICHAR(set_[pointIndex]),
+						   x, 
+						   y);
+#endif
 				pointIndexOld = pointIndex;
-				pointIndex += NeighbourShift (set_[pointIndex] >> 8);
-				set_[pointIndex] &= InverseNeighbour (set_[pointIndexOld] >> 8);
+				
+				pointIndex += NeighbourShift (HICHAR (set_[pointIndexOld]));
+#if (NEED_DEBUG > 0)
+				if (pointIndex == DEBUG_X*DATA_HEIGHT + DEBUG_Y)
+					printf("Fill fronts NEXT before flush loop%d %x %d %d\n",
+						loop,
+						set_[pointIndex],
+						x,
+						y);
+#endif
+				set_[pointIndex] &= ~(InverseNeighbour (HICHAR (set_[pointIndexOld])) << 8);
 				set_[pointIndexOld] = 0;
+#if (NEED_DEBUG > 0)
+				if (pointIndex == DEBUG_X*DATA_HEIGHT + DEBUG_Y)
+					printf("Fill fronts NEXT after flush loop%d %x %d %d\n",
+						loop,
+						set_[pointIndex],
+						x,
+						y);
+#endif
 				current.AddPoint (pointIndex / DATA_HEIGHT,
 								  pointIndex % DATA_HEIGHT);
 
 			}
-			if (!current.empty())
+			set_[pointIndex] = 0;
+
+			if (current.size() > 2)
 			{
 				current.Process(mdl, slice);
 				fronts_.push_back(current);
@@ -245,6 +318,7 @@ void FrontAnalyzer::FillFronts (MeteoDataLoader* mdl, int slice)
 			}
 		}
 	}
+	END_EXCEPTION_HANDLING (FILL_FRONTS)
 }
 
 
@@ -687,3 +761,6 @@ if (lastPos != LAST_##lastPos1 && currentPoint. ifParam && !done[currentPoint.x 
 #undef OPERATION
 		}
 }*/
+
+#undef LOWCHAR
+#undef HICHAR

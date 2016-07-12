@@ -1,11 +1,19 @@
 Exception with error code 134,
 error message: "void __cdecl MeteoObject::RunPolygonalBuilding(void): Error occurred"
-occurred in file: "MeteoObject.cpp" on line 485
+occurred in file: "MeteoObject.cpp" on line 484
 caused by:
 Exception with error code 15,
 error message: "__cdecl FrontAnalyzer::FrontAnalyzer(class MeteoDataLoader *,int): Error occurred"
-occurred in file: "FrontAnalyzer.cpp" on line 39
+occurred in file: "FrontAnalyzer.cpp" on line 69
 caused by:
-Exception with error code 17,
-error message: "void __cdecl FrontThinner::FindSkeleton(void): .std::bad_alloc. "
-occurred in file: "FrontThinner.cpp" on line 501
+Exception with error code 144,
+error message: "void __cdecl FrontAnalyzer::FillFronts(class MeteoDataLoader *,int): Error occurred"
+occurred in file: "FrontAnalyzer.cpp" on line 301
+caused by:
+Exception with error code 141,
+error message: "int __cdecl FrontAnalyzer::NeighbourShift(unsigned char): Error occurred"
+occurred in file: "FrontAnalyzer.cpp" on line 110
+caused by:
+Exception with error code 142,
+error message: "Invalid neighbour index (0b00000000)"
+occurred in file: "FrontAnalyzer.cpp" on line 107
