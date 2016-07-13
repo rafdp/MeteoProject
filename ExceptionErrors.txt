@@ -4,16 +4,16 @@ occurred in file: "MeteoObject.cpp" on line 484
 caused by:
 Exception with error code 15,
 error message: "__cdecl FrontAnalyzer::FrontAnalyzer(class MeteoDataLoader *,int): Error occurred"
-occurred in file: "FrontAnalyzer.cpp" on line 69
+occurred in file: "FrontAnalyzer.cpp" on line 65
 caused by:
 Exception with error code 144,
 error message: "void __cdecl FrontAnalyzer::FillFronts(class MeteoDataLoader *,int): Error occurred"
-occurred in file: "FrontAnalyzer.cpp" on line 301
+occurred in file: "FrontAnalyzer.cpp" on line 350
 caused by:
 Exception with error code 141,
 error message: "int __cdecl FrontAnalyzer::NeighbourShift(unsigned char): Error occurred"
-occurred in file: "FrontAnalyzer.cpp" on line 110
+occurred in file: "FrontAnalyzer.cpp" on line 106
 caused by:
 Exception with error code 142,
-error message: "Invalid neighbour index (0b00000000)"
-occurred in file: "FrontAnalyzer.cpp" on line 107
+error message: "Invalid neighbour index (0b01000101)"
+occurred in file: "FrontAnalyzer.cpp" on line 103

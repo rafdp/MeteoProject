@@ -22,6 +22,14 @@ public:
 
 };
 
+struct NeighbourN_t
+{
+	uint8_t neighbours;
+	uint8_t n;
+
+	void clear ();
+};
+
 double Dist(const SPOINT_t& x, const SPOINT_t& y);
 SPOINT_t operator + (const SPOINT_t& x, const SPOINT_t& y);
 SPOINT_t operator / (const SPOINT_t& x, int y);
@@ -58,7 +66,7 @@ struct FrontInfo_t
 class FrontAnalyzer : NZA_t
 {
 	std::vector<FrontInfo_t> fronts_;
-	unsigned short* set_;
+	NeighbourN_t* set_;
 	MeteoDataLoader* mdl_;
 	int slice_;
 	std::vector<uint32_t> toFlush_;
@@ -77,7 +85,7 @@ public:
 
 	std::vector<FrontInfo_t>& GetFront();
 
-	void RecursiveMapAnalyzer (int x, int y);
+	void AnalyzeCell (int x, int y);
 
 	void FlushBadCells ();
 

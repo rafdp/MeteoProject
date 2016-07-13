@@ -131,6 +131,8 @@ int WINAPI WinMain (HINSTANCE hInstance,
 				
 			}
 			ticksN++;
+			_getch();
+			break;
 		}
 		FreeConsole ();
 	}
@@ -151,8 +153,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
 
 	delete __EXPN__;
 
-	system ("start Data/new.exe");
-	system ("start Data/new1.exe");
+	system ("start new.exe");
 
 	return 0;
 }
