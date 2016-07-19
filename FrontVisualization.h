@@ -11,6 +11,16 @@ public:
 
 struct FrontInfo_t;
 
+struct EquivalentPointData_t
+{
+	uint32_t point;
+	double d;
+};
+
+EquivalentPointData_t FindEquivalentPoint (FrontInfo_t* front,
+										   FrontInfo_t* frontTarget,
+										   uint32_t point);
+
 class FrontVisualizer : NZA_t
 {
 	XMMATRIX world_;
@@ -24,13 +34,13 @@ class FrontVisualizer : NZA_t
 	ShaderIndex_t pixS_;
 	LayoutIndex_t layout_;
 
-	void BuildSingleTriangle(MeteoDataLoader* mdl,
-							 std::vector<Vertex_t>& vertices,
-							 std::vector<UINT>& indices,
-							 FrontInfo_t& front,
-							 FrontInfo_t& frontTarget,
-							 int8_t currentLevel,
-							 int8_t d);
+	void ConnectSlices(MeteoDataLoader* mdl,
+					   std::vector<Vertex_t>& vertices,
+					   std::vector<UINT>& indices,
+					   FrontInfo_t& front,
+					   FrontInfo_t& frontTarget,
+					   int8_t currentSlice,
+					   int8_t d);
 
 public:
 	FrontVisualizer (FrontAnalyzer* level0,

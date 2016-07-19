@@ -89,3 +89,5 @@
 /0viewer.exe
 /.vs/MeteoProject/v14/.suo
 /Release
+/snapshots
+/x64/Release

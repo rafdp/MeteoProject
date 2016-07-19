@@ -40,9 +40,9 @@ try :
 	//FrontThinner ft (&fronts_);
 	//ft.FindSkeleton();
 
-
+	return;
 	//printf("Slice %d fronts %llu\n", slice, fronts_.size());
-	if (slice != 0) return;
+	//if (slice != 3) return;
 	FILE* f = nullptr;
 	fopen_s(&f, "Front.data", "wb");
 	fwrite(&DATA_WIDTH, sizeof(int), 1, f);
@@ -52,12 +52,14 @@ try :
 	size_t currentSize = 0;
 	for (uint32_t i = 0; i < Nfronts_; i++)
 	{
+		//currentSize = fronts_[i].skeleton0_.size();
 		currentSize = fronts_[i].points_.size();
 		//printf("SIZE %llu\n", currentSize);
 
 		fwrite(&currentSize, sizeof(size_t), 1, f);
 		for (uint32_t j = 0; j < currentSize; j++)
 		{
+			//fwrite(&fronts_[i].points_[fronts_[i].skeleton0_[j]], sizeof(POINT), 1, f);
 			fwrite(&fronts_[i].points_[j], sizeof(POINT), 1, f);
 		}
 		//fwrite(fronts_[i].skeleton0_.data(), sizeof(POINT), currentSize, f);
@@ -65,6 +67,7 @@ try :
 	//printf("%llu\n", fronts_.size());
 	//while (!GetAsyncKeyState(VK_SPACE));
 	fclose(f);
+	system("GetBMP.exe");
 }
 _END_EXCEPTION_HANDLING(CTOR)
 
@@ -357,7 +360,7 @@ void FrontAnalyzer::FillFronts (MeteoDataLoader* mdl, int slice)
 			set_[pointIndex].clear ();
 			if (current.size() > 2)
 			{
-				//current.Process(mdl, slice);
+				current.Process(mdl, slice);
 				if (next) printf("DEBUG     Before adding %llu\n", fronts_.size());
 				fronts_.push_back(current);
 				if (next) printf("DEBUG     After adding %llu\n", fronts_.size());
@@ -457,36 +460,16 @@ void FrontInfo_t::FillSkeleton0(MeteoDataLoader* mdl, int slice)
 {
 	if (points_.empty()) return;
 	if (!skeleton0_.empty()) skeleton0_.clear();
-	SPOINT_t current(points_[0]);
-	skeleton0_.push_back(0);
-	for (auto iter = points_.begin() + 1; iter < points_.end(); iter++)
-	{
-		float intensity = 0.0f;
-		char n = 0;
-		if (iter->x >= 1 && ((intensity = *mdl->Offset(iter->x - 1, iter->y, slice)) >= 0.001f && intensity <= 12.001f))
-			n++;
-		if (iter->x < DATA_WIDTH - 1 && ((intensity = *mdl->Offset(iter->x + 1, iter->y, slice)) >= 0.0001f && intensity <= 12.001f))
-			n++;
-		if (iter->y >= 1 && ((intensity = *mdl->Offset(iter->x, iter->y - 1, slice)) >= 0.001f && intensity <= 12.001f))
-			n++;
-		if (iter->y < DATA_HEIGHT - 1 && ((intensity = *mdl->Offset(iter->x, iter->y + 1, slice)) >= 0.0001f && intensity <= 12.001f))
-			n++;
-
-		if ((abs(current.x - iter->x) >= SKELETON0_RANGE &&
-			abs(current.y - iter->y) >= SKELETON0_RANGE &&
-			n == 4) ||
-			(abs(current.x - iter->x) >= 3 * SKELETON0_RANGE &&
-				abs(current.y - iter->y) >= 3 * SKELETON0_RANGE))
-		{
-			current = *iter;
-			skeleton0_.push_back(iter - points_.begin());
-		}
-	}
+	size_t size = points_.size ();
+	/*if (points_[0].x < points_[size - 1].x &&
+		points_[0].y < points_[size - 1].y)
+		for (uint64_t i = size - 1; i >= 0; i -= SKELETON0_RANGE) skeleton0_.push_back(i);
+	else*/
+	for (uint64_t i = 0; i < size; i += SKELETON0_RANGE) skeleton0_.push_back (i);
 }
 
 void FrontInfo_t::CalculateNear(const std::vector<FrontInfo_t>& data)
 {
-
 	SectionsType_t nearSections = 0;
 	for (char shift = 0; shift < sizeof(SectionsType_t) * 8; shift++)
 	{
@@ -654,6 +637,11 @@ SPOINT_t::SPOINT_t(int x_, int y_) :
 	x(x_),
 	y(y_)
 {}
+
+SPOINT_t SPOINT_t::operator-(const SPOINT_t & that)
+{
+	return SPOINT_t(x-that.x, y-that.y);
+}
 
 void NeighbourN_t::clear()
 {

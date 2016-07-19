@@ -20,6 +20,8 @@ public:
 	SPOINT_t ();
 	SPOINT_t (int x, int y);
 
+	SPOINT_t operator - (const SPOINT_t& that);
+
 };
 
 struct NeighbourN_t
